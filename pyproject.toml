@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "prompts-v2-kernel"
-version = "0.1.0"
-description = "Deterministic module validator and selector for PROMPTS V2"
+version = "0.2.0"
+description = "Deterministic module composer and external-state reliability harness for PROMPTS V2"
 requires-python = ">=3.11"
 dependencies = []
+
+[project.optional-dependencies]
+test = ["jsonschema>=4.23,<5"]
 
 [project.scripts]
 promptctl = "promptctl.__main__:main"
