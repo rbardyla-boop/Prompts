@@ -1,0 +1,18 @@
+{
+  "taskpack_id": "software-build",
+  "version": "1.0.0",
+  "task_type": "software",
+  "module_ids": ["workflow.minimum-viable-experiment"],
+  "deliverables": ["runnable implementation", "tests", "reproduction instructions"],
+  "constraints": ["No arbitrary execution surface.", "No secrets in source or traces."],
+  "completion_checks": [
+    {"id": "required-behavior", "description": "All locked requirements pass", "required": true},
+    {"id": "regressions", "description": "Regression suite passes", "required": true},
+    {"id": "security", "description": "Security checks pass", "required": true},
+    {"id": "independent-evaluation", "description": "Independent evaluator passes", "required": true}
+  ],
+  "allowed_actions": ["read_repository", "write_worktree", "run_tests", "run_deterministic_checks"],
+  "forbidden_actions": ["production_deploy", "access_secrets", "destructive_write", "arbitrary_network"],
+  "default_budgets": {"max_steps": 60, "max_runtime_minutes": 180, "max_replans": 2},
+  "terminal_states": ["PASS", "PASS_WITH_DISCLOSED_LIMITS", "SEALED_NEGATIVE_RESULT", "BLOCKED_EXTERNAL"]
+}
