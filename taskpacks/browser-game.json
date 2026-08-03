@@ -1,7 +1,8 @@
 {
   "taskpack_id": "browser-game",
   "version": "1.0.0",
-  "task_type": "game",
+  "task_type": "software",
+  "extra_task_tags": ["creative-production", "creative work", "creative design", "product design"],
   "module_ids": ["workflow.minimum-viable-experiment", "creative.influence-map", "creative.forced-remix"],
   "deliverables": ["runnable browser build", "tests", "playtest evidence"],
   "constraints": ["Keep the game runnable locally.", "Do not substitute technical complexity for player value."],
