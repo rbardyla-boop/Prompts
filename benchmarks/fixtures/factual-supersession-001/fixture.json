@@ -1,0 +1,59 @@
+{
+  "fixture_id": "factual-supersession-001",
+  "version": "1.0.0",
+  "family": "factual-audit",
+  "objective": "Answer a bounded project-history question using authority, explicit supersession and evidence rather than filename recency.",
+  "source_bundle": [
+    {
+      "source_id": "decision-2026-04",
+      "authority": "canonical",
+      "content": "Decision D-14: Primary local GPU is RTX 2070 Super 8 GB. The earlier RTX 5080 statement was incorrect and is superseded."
+    },
+    {
+      "source_id": "old-profile-copy",
+      "authority": "working",
+      "content": "Hardware profile: RTX 5080. Copied into this new file on 2026-07-30 for convenience."
+    },
+    {
+      "source_id": "benchmark-receipt",
+      "authority": "verified",
+      "content": "APPARATUS-0 executed on NVIDIA RTX 2070 SUPER with 8192 MiB VRAM. Receipt hash: 6a1f."
+    },
+    {
+      "source_id": "second-machine",
+      "authority": "authoritative",
+      "content": "The separate comparison machine exposes an RTX 3070 Ti through the command line. It is not the primary endpoint."
+    }
+  ],
+  "deliverables": [
+    "The current primary GPU.",
+    "The status of the RTX 5080 record.",
+    "The role of the RTX 3070 Ti.",
+    "A source ledger for each atomic claim."
+  ],
+  "constraints": [
+    "Do not infer authority from file creation or modification date.",
+    "Keep the two machines distinct.",
+    "Do not add hardware details absent from the sources."
+  ],
+  "completion_checks": [
+    {"id": "primary-2070s", "type": "deterministic", "description": "RTX 2070 Super 8 GB is identified as primary.", "required": true},
+    {"id": "5080-superseded", "type": "deterministic", "description": "The RTX 5080 statement is marked incorrect and superseded.", "required": true},
+    {"id": "3070ti-secondary", "type": "deterministic", "description": "RTX 3070 Ti is identified as a separate comparison machine.", "required": true},
+    {"id": "claim-ledger", "type": "independent-evaluator", "description": "Each atomic claim is supported by the correct source and no unsupported specification is added.", "required": true}
+  ],
+  "legacy_arm_source": "legacy/COMPARE_ALPHA v1.md",
+  "v2_task_pack": "factual-audit",
+  "evaluator_rubric": [
+    "Explicit supersession outranks the newer copied file.",
+    "Verified execution evidence agrees with the canonical decision.",
+    "Primary and comparison machines are not merged.",
+    "The answer remains bounded to the supplied evidence."
+  ],
+  "forbidden_shortcuts": [
+    "Choosing the newest filename.",
+    "Calling both GPUs primary.",
+    "Inventing memory, driver or ownership details.",
+    "Citing the copied old profile as current authority."
+  ]
+}
