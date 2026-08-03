@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "project": "PROMPTS V2 — GAUNTLET AGENT OS",
+  "checkpoint": "PROMPTS_V2_CHECKPOINT_0004",
+  "state": "LEGACY_CONFLICTS_RESOLVED_IN_SPEC",
+  "source_checkpoint": "PROMPTS_V2_CHECKPOINT_0003",
+  "branch": "revival/prompts-v2",
+  "head_before_receipt": "0069a1cba404ffb78eab4cd1a36c54d0cf941b2e",
+  "artifacts": [
+    {
+      "path": "PRECEDENCE_POLICY.yaml",
+      "git_blob_sha1": "a669197efa72a88ff309e0cce544060c5980c1b2",
+      "status": "FROZEN_CANDIDATE"
+    },
+    {
+      "path": "CONFLICT_LEDGER.md",
+      "git_blob_sha1": "76ecd12b9fbbd40156a7be497e80341c50b3dfb5",
+      "conflict_count": 30
+    },
+    {
+      "path": "DEPRECATION_LEDGER.md",
+      "git_blob_sha1": "00779ce3bf5c7248a8d7c2dc52e036354b066999"
+    },
+    {
+      "path": "RULE_GRAPH.json",
+      "git_blob_sha1": "963466c5e5fd8e2dd9d960e016ef89da35ab79e0",
+      "node_count": 24,
+      "declared_cycle_count": 0
+    }
+  ],
+  "locked_precedence": [
+    "enforced security boundary",
+    "explicit user contract",
+    "kernel invariants",
+    "deterministic completion checks",
+    "task-pack policy",
+    "domain methods",
+    "heuristics",
+    "adapters and style preferences"
+  ],
+  "specification_checks": {
+    "catalog_node_count_matches": "PASS",
+    "all_declared_edge_nodes_exist": "PASS",
+    "profile_specific_modules_are_opt_in": "SPECIFIED",
+    "heuristics_cannot_authorize_release": "SPECIFIED",
+    "adapters_cannot_change_contract": "SPECIFIED",
+    "legacy_bytes_modified": false
+  },
+  "mechanical_checks_pending": [
+    "Automated graph cycle detection",
+    "Deterministic topological order",
+    "Conflict-resolution receipt validation",
+    "Profile-specific auto-load rejection test",
+    "Heuristic permission and completion rejection tests",
+    "GEOPOL contaminated-tail exclusion regression"
+  ],
+  "strongest_supported_claim": "The 24 extracted legacy mechanisms now have an explicit precedence order, 30 recorded conflict rulings, a deprecation/quarantine ledger and a machine-readable dependency graph. Mechanical enforcement is not yet implemented.",
+  "terminal_status": "IN_PROGRESS",
+  "next_required_action": "Implement the minimal kernel validator and deterministic module selector, then prove the graph and precedence rules with regressions."
+}
