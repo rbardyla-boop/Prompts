@@ -1,0 +1,19 @@
+{
+  "taskpack_id": "harness-terminal-test",
+  "version": "1.0.0",
+  "task_type": "software",
+  "module_ids": [],
+  "deliverables": ["five-requirement fixture"],
+  "constraints": ["Requirement checks cannot be weakened."],
+  "completion_checks": [
+    {"id": "req-1", "description": "Requirement 1 passes", "required": true},
+    {"id": "req-2", "description": "Requirement 2 passes", "required": true},
+    {"id": "req-3", "description": "Requirement 3 passes", "required": true},
+    {"id": "req-4", "description": "Requirement 4 passes", "required": true},
+    {"id": "req-5", "description": "Requirement 5 passes", "required": true}
+  ],
+  "allowed_actions": ["read_repository", "write_worktree", "run_deterministic_checks"],
+  "forbidden_actions": ["production_deploy", "access_secrets", "destructive_write", "arbitrary_shell"],
+  "default_budgets": {"max_steps": 40, "max_runtime_minutes": 45, "max_replans": 2},
+  "terminal_states": ["PASS", "BLOCKED_EXTERNAL"]
+}
