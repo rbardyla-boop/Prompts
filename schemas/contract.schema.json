@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rbardyla-boop/Prompts/schemas/contract.schema.json",
+  "title": "PROMPTS v2 Agent Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "taskpack_id",
+    "objective",
+    "deliverables",
+    "constraints",
+    "module_ids",
+    "completion_checks",
+    "allowed_actions",
+    "forbidden_actions",
+    "terminal_states",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "task_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "taskpack_id": {"type": "string", "pattern": "^[a-z][a-z0-9-]*$"},
+    "objective": {"type": "string", "minLength": 1},
+    "deliverables": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "constraints": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "module_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "completion_checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "required"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+          "description": {"type": "string", "minLength": 3},
+          "required": {"const": true}
+        }
+      }
+    },
+    "allowed_actions": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "forbidden_actions": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "terminal_states": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["PASS", "PASS_WITH_DISCLOSED_LIMITS", "SEALED_NEGATIVE_RESULT", "BLOCKED_EXTERNAL", "PROMPTS_V2_VALIDATED"]}
+    },
+    "created_at": {"type": "string", "format": "date-time"}
+  }
+}
