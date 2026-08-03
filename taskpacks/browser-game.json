@@ -1,0 +1,18 @@
+{
+  "taskpack_id": "browser-game",
+  "version": "1.0.0",
+  "task_type": "game",
+  "module_ids": ["workflow.minimum-viable-experiment", "creative.influence-map", "creative.forced-remix"],
+  "deliverables": ["runnable browser build", "tests", "playtest evidence"],
+  "constraints": ["Keep the game runnable locally.", "Do not substitute technical complexity for player value."],
+  "completion_checks": [
+    {"id": "build-runs", "description": "Clean local build runs", "required": true},
+    {"id": "mechanics-pass", "description": "Locked mechanics pass tests", "required": true},
+    {"id": "fresh-player-test", "description": "Fresh players understand and prefer the build", "required": true},
+    {"id": "independent-evaluation", "description": "Independent evaluator passes", "required": true}
+  ],
+  "allowed_actions": ["read_repository", "write_worktree", "run_tests", "run_browser", "capture_evidence"],
+  "forbidden_actions": ["production_deploy", "access_secrets", "destructive_write"],
+  "default_budgets": {"max_steps": 120, "max_runtime_minutes": 480, "max_replans": 3},
+  "terminal_states": ["PASS", "PASS_WITH_DISCLOSED_LIMITS", "SEALED_NEGATIVE_RESULT", "BLOCKED_EXTERNAL"]
+}
