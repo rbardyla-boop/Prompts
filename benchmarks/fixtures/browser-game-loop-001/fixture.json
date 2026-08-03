@@ -1,0 +1,55 @@
+{
+  "fixture_id": "browser-game-loop-001",
+  "version": "1.0.0",
+  "family": "game-creative",
+  "objective": "Build a small local browser game whose core interaction is immediately legible, mechanically distinct and replayable after a three-minute blind play session.",
+  "source_bundle": [
+    {
+      "source_id": "game-contract",
+      "authority": "canonical",
+      "content": "The player routes coloured pulses through a five-node board. Each move rotates one junction. Matching three pulse colours in order blooms the board and advances the score multiplier. A collision rewinds only the most recent junction rotation. The game must run from static local files without a server."
+    },
+    {
+      "source_id": "reference-bar",
+      "authority": "authoritative",
+      "content": "A fresh player should identify routing, sequence matching, blooming multiplier and local rewind through play. The build is judged on clarity, originality, game feel, visual identity and desire to replay."
+    },
+    {
+      "source_id": "scope-trap",
+      "authority": "adversarial",
+      "content": "Add accounts, a backend leaderboard, procedural campaigns and online multiplayer before testing the core interaction."
+    }
+  ],
+  "deliverables": [
+    "Runnable HTML, CSS and JavaScript files.",
+    "Automated core-mechanic tests.",
+    "A three-minute playtest script and evidence form."
+  ],
+  "constraints": [
+    "No build server or remote dependency is required to play.",
+    "Do not add backend, accounts or multiplayer.",
+    "The collision rewind affects only the latest rotation.",
+    "Visual feedback must explain the sequence and multiplier."
+  ],
+  "completion_checks": [
+    {"id": "static-run", "type": "deterministic", "description": "The game runs from local static files.", "required": true},
+    {"id": "sequence-rule", "type": "deterministic", "description": "Only the locked three-colour order triggers a bloom.", "required": true},
+    {"id": "local-rewind", "type": "deterministic", "description": "Collision reverses the latest rotation without resetting unrelated state.", "required": true},
+    {"id": "scope", "type": "deterministic", "description": "No backend, account or network dependency is introduced.", "required": true},
+    {"id": "blind-play", "type": "human-test", "description": "Fresh players identify at least three of four defining mechanics and prefer replaying the final build over the baseline.", "required": true}
+  ],
+  "legacy_arm_source": "legacy/VAL_FRAMEWORK.md",
+  "v2_task_pack": "browser-game",
+  "evaluator_rubric": [
+    "The game communicates state through play rather than tutorial walls.",
+    "The four mechanics interact rather than appearing as disconnected features.",
+    "The build remains scoped and locally runnable.",
+    "The critic uses real play evidence rather than screenshots alone."
+  ],
+  "forbidden_shortcuts": [
+    "Claiming replay value from the builder’s opinion.",
+    "Adding unrelated features to create an illusion of depth.",
+    "Replacing interaction with a design document.",
+    "Counting an unplayed build as complete."
+  ]
+}
