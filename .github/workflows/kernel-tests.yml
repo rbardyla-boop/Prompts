@@ -1,4 +1,4 @@
-name: PROMPTS v2 kernel tests
+name: PROMPTS v2 kernel and harness tests
 
 on:
   push:
@@ -8,16 +8,22 @@ on:
     paths:
       - promptctl/**
       - tests/**
+      - taskpacks/**
+      - schemas/**
       - modules/legacy-extracted/MODULE_CATALOG.json
       - RULE_GRAPH.json
+      - PRECEDENCE_POLICY.yaml
       - pyproject.toml
       - .github/workflows/kernel-tests.yml
   pull_request:
     paths:
       - promptctl/**
       - tests/**
+      - taskpacks/**
+      - schemas/**
       - modules/legacy-extracted/MODULE_CATALOG.json
       - RULE_GRAPH.json
+      - PRECEDENCE_POLICY.yaml
       - pyproject.toml
 
 permissions:
@@ -31,19 +37,38 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Validate repository kernel
         run: python -m promptctl --root . validate
-      - name: Run adversarial unit tests
+
+      - name: Run all adversarial unit tests
         run: python -m unittest discover -s tests -v
-      - name: Verify deterministic selection
+
+      - name: Execute false-completion terminal harness
+        run: python -m promptctl --root . self-test
+
+      - name: Verify deterministic direct selection
         run: |
           python -m promptctl --root . explain --task-type research > /tmp/selection-a.json
           python -m promptctl --root . explain --task-type research > /tmp/selection-b.json
           cmp /tmp/selection-a.json /tmp/selection-b.json
+
+      - name: Verify deterministic task-pack selection
+        run: |
+          python -m promptctl --root . explain --task-pack deep-research > /tmp/pack-a.json
+          python -m promptctl --root . explain --task-pack deep-research > /tmp/pack-b.json
+          cmp /tmp/pack-a.json /tmp/pack-b.json
+          python -m promptctl --root . explain --task-pack browser-game > /tmp/browser.json
+          grep -Fq 'creative.forced-remix' /tmp/browser.json
+          grep -Fq 'development.secure-defaults' /tmp/browser.json
+
       - name: Verify composition excludes quarantined tail
         run: |
-          python -m promptctl --root . compose --task-type research --goal "Audit the evidence." > /tmp/composed.md
+          python -m promptctl --root . compose --task-pack deep-research --goal "Audit the evidence." > /tmp/composed.md
           if grep -Fq "Sure, I can help you with that" /tmp/composed.md; then
             echo "Quarantined legacy content entered composed prompt"
             exit 1
           fi
+
+      - name: Verify package compiles
+        run: python -m compileall -q promptctl tests
