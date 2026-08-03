@@ -38,6 +38,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check -e '.[test]'
+
       - name: Validate repository kernel
         run: python -m promptctl --root . validate
 
