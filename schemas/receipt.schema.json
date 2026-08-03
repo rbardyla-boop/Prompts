@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rbardyla-boop/Prompts/schemas/receipt.schema.json",
+  "title": "PROMPTS v2 Completion Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "submitted_at",
+    "worker_claim",
+    "required_check_ids",
+    "check_results",
+    "missing_checks",
+    "failed_checks",
+    "evaluator",
+    "recovery_result",
+    "trace_result",
+    "trace_error",
+    "gates",
+    "accepted",
+    "receipt_hash"
+  ],
+  "properties": {
+    "task_id": {"type": "string"},
+    "submitted_at": {"type": "string", "format": "date-time"},
+    "worker_claim": {"const": "DONE"},
+    "required_check_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "check_results": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "missing_checks": {"type": "array", "items": {"type": "string"}},
+    "failed_checks": {"type": "array", "items": {"type": "string"}},
+    "evaluator": {
+      "type": "object",
+      "required": ["verdict"],
+      "properties": {
+        "verdict": {"enum": ["PASS", "FAIL"]},
+        "evidence": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    },
+    "recovery_result": {"enum": ["PASS", "FAIL"]},
+    "trace_result": {"type": ["object", "null"]},
+    "trace_error": {"type": ["string", "null"]},
+    "gates": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "all_required_results_present",
+        "all_required_checks_pass",
+        "evaluator_pass",
+        "recovery_pass",
+        "trace_integrity_pass",
+        "contract_unchanged"
+      ],
+      "properties": {
+        "all_required_results_present": {"type": "boolean"},
+        "all_required_checks_pass": {"type": "boolean"},
+        "evaluator_pass": {"type": "boolean"},
+        "recovery_pass": {"type": "boolean"},
+        "trace_integrity_pass": {"type": "boolean"},
+        "contract_unchanged": {"type": "boolean"}
+      }
+    },
+    "accepted": {"type": "boolean"},
+    "receipt_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
