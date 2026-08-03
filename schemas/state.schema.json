@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rbardyla-boop/Prompts/schemas/state.schema.json",
+  "title": "PROMPTS v2 Canonical Agent State",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "task_id",
+    "status",
+    "current_phase",
+    "completed_components",
+    "next_action",
+    "failed_check_id",
+    "failure_fingerprint",
+    "blocked_by",
+    "attempts_on_current_failure",
+    "latest_verified_checkpoint",
+    "remaining_budget",
+    "terminal_result",
+    "contract_hash"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "task_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$"},
+    "status": {"enum": ["PLANNING", "EXECUTING", "VERIFYING", "REPAIRING", "BLOCKED", "ESCALATED", "TERMINAL"]},
+    "current_phase": {"type": "string", "minLength": 1},
+    "completed_components": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+    "next_action": {"type": "string", "minLength": 1},
+    "failed_check_id": {"type": ["string", "null"]},
+    "failure_fingerprint": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "blocked_by": {"type": ["string", "null"]},
+    "attempts_on_current_failure": {"type": "integer", "minimum": 0},
+    "latest_verified_checkpoint": {"type": "string", "pattern": "^checkpoint-[0-9]{4}$"},
+    "remaining_budget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_steps", "max_runtime_minutes", "max_replans"],
+      "properties": {
+        "max_steps": {"type": "integer", "minimum": 0},
+        "max_runtime_minutes": {"type": "integer", "minimum": 0},
+        "max_replans": {"type": "integer", "minimum": 0},
+        "max_cost_usd": {"type": "number", "minimum": 0}
+      }
+    },
+    "terminal_result": {
+      "type": ["string", "null"],
+      "enum": [null, "PASS", "PASS_WITH_DISCLOSED_LIMITS", "SEALED_NEGATIVE_RESULT", "BLOCKED_EXTERNAL", "PROMPTS_V2_VALIDATED"]
+    },
+    "contract_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
