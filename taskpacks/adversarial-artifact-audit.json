@@ -1,0 +1,18 @@
+{
+  "taskpack_id": "adversarial-artifact-audit",
+  "version": "1.0.0",
+  "task_type": "benchmarking",
+  "module_ids": ["evidence.falsification-check", "evidence.metric-integrity", "research.competing-view-search"],
+  "deliverables": ["attack ledger", "reproduction cases", "verdict"],
+  "constraints": ["Preserve failed artifacts.", "Do not repair before reproducing the defect."],
+  "completion_checks": [
+    {"id": "attacks-executed", "description": "Material adversarial tests executed", "required": true},
+    {"id": "first-failure", "description": "Earliest wrong state identified where possible", "required": true},
+    {"id": "regression-created", "description": "Serious failures became regressions", "required": true},
+    {"id": "independent-evaluation", "description": "Independent evaluator passes", "required": true}
+  ],
+  "allowed_actions": ["read_repository", "write_worktree", "run_tests", "mutate_fixture", "run_deterministic_checks"],
+  "forbidden_actions": ["production_deploy", "access_secrets", "destructive_write"],
+  "default_budgets": {"max_steps": 80, "max_runtime_minutes": 240, "max_replans": 2},
+  "terminal_states": ["PASS", "PASS_WITH_DISCLOSED_LIMITS", "SEALED_NEGATIVE_RESULT", "BLOCKED_EXTERNAL"]
+}
