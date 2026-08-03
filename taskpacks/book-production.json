@@ -2,6 +2,7 @@
   "taskpack_id": "book-production",
   "version": "1.0.0",
   "task_type": "writing",
+  "extra_task_tags": ["creative work", "creative-production", "framework development"],
   "module_ids": ["creative.influence-map", "creative.transform-with-attribution"],
   "deliverables": ["complete manuscript", "editorial reports", "publication package"],
   "constraints": ["Preserve author voice.", "Do not invent endorsements, sources or biographical claims."],
