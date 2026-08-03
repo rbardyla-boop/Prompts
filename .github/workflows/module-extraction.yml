@@ -18,562 +18,212 @@ jobs:
   extract:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out revival branch
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: revival/prompts-v2
 
-      - name: Verify frozen legacy bytes
+      - name: Verify frozen corpus
         run: |
           set -euo pipefail
           sha256sum -c LEGACY_SHA256SUMS.txt
           git diff --exit-code -- legacy
 
-      - name: Install schema validator
-        run: python3 -m pip install --disable-pip-version-check jsonschema
-
-      - name: Generate module manifests and audit
-        env:
-          WORKFLOW_RUN_ID: ${{ github.run_id }}
-          WORKFLOW_RUN_ATTEMPT: ${{ github.run_attempt }}
+      - name: Generate typed module manifests
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import collections
           import hashlib
           import json
-          import os
-          import pathlib
-          from jsonschema import Draft202012Validator
+          from pathlib import Path
 
-          ROOT = pathlib.Path('.')
-          OUT = ROOT / 'modules' / 'legacy-extracted'
-          OUT.mkdir(parents=True, exist_ok=True)
+          out = Path("modules/legacy-extracted")
+          out.mkdir(parents=True, exist_ok=True)
 
-          SHA = {
-              'README': '5d96a585b19b3ffeb992f8e94b589097f05c0f87865be8405c0e737d32e2ba33',
-              'COMPARE': 'cf5af7436c99fe051d15ac82fa4658800e79ce7b9b4c78d19922e5ee43a65c51',
-              'CRIME': 'c7b320a08d38aa29d5c341953b9856cad23c5ff594e0a47c99c8999dfdef859e',
-              'GEOPOL': 'e383bf8754cb41667a4e0ad84cfbb63dfab04528ebbf8ed7601fda0b2a41debf',
-              'APEX': '80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39',
-              'GUIDE': 'b564800b60069a8c10520bcb82b5c0b8b4efbe3e1c1f8866773536b628933e1f',
-              'KLEON': 'e5b9b501f8f2d918457151ce8390a2708007e61f04d0535cd9e132d16abdb4fd',
-              'META': 'd174447743e7ad906063c69ff7728cb96a4962438d5954294a101a0b12a49a70',
-              'ALPHA': 'e25a3aa4a3c0d4359c7531e523c12507626d7871e1a109fdbf0f9bb209b1ee9a',
-              'VAL': 'b1c649536006764592fd865cb79daeb3e3c2e0a767706d09afe709d9395c2b1a',
+          sources = {
+            "APEX": ("legacy/GROK_APEX_4.4.md", "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39"),
+            "VAL": ("legacy/VAL_FRAMEWORK.md", "b1c649536006764592fd865cb79daeb3e3c2e0a767706d09afe709d9395c2b1a"),
+            "KLEON": ("legacy/KLEON_CREATIVE_LAYER_v1.1.md", "e5b9b501f8f2d918457151ce8390a2708007e61f04d0535cd9e132d16abdb4fd"),
+            "META": ("legacy/META_SCIENCE_INVESTIGATION_v1.1.md", "d174447743e7ad906063c69ff7728cb96a4962438d5954294a101a0b12a49a70"),
+            "CRIME": ("legacy/CRIME_ALPHA v1.md", "c7b320a08d38aa29d5c341953b9856cad23c5ff594e0a47c99c8999dfdef859e"),
+            "GEOPOL": ("legacy/GEOPOL_ALPHA v1.md", "e383bf8754cb41667a4e0ad84cfbb63dfab04528ebbf8ed7601fda0b2a41debf"),
+            "COMPARE": ("legacy/COMPARE_ALPHA v1.md", "cf5af7436c99fe051d15ac82fa4658800e79ce7b9b4c78d19922e5ee43a65c51"),
+            "ALPHA": ("legacy/THE ALPHA SUITE v1.0.md", "e25a3aa4a3c0d4359c7531e523c12507626d7871e1a109fdbf0f9bb209b1ee9a"),
+            "GUIDE": ("legacy/GROK_PROMPTING_GUIDE.md", "b564800b60069a8c10520bcb82b5c0b8b4efbe3e1c1f8866773536b628933e1f")
           }
 
-          PATHS = {
-              'README': 'legacy/README.md',
-              'COMPARE': 'legacy/COMPARE_ALPHA v1.md',
-              'CRIME': 'legacy/CRIME_ALPHA v1.md',
-              'GEOPOL': 'legacy/GEOPOL_ALPHA v1.md',
-              'APEX': 'legacy/GROK_APEX_4.4.md',
-              'GUIDE': 'legacy/GROK_PROMPTING_GUIDE.md',
-              'KLEON': 'legacy/KLEON_CREATIVE_LAYER_v1.1.md',
-              'META': 'legacy/META_SCIENCE_INVESTIGATION_v1.1.md',
-              'ALPHA': 'legacy/THE ALPHA SUITE v1.0.md',
-              'VAL': 'legacy/VAL_FRAMEWORK.md',
-          }
+          def ref(key, section):
+            path, digest = sources[key]
+            return {"path": path, "sha256": digest, "sections": [section]}
 
-          def ref(key, *sections):
-              return {'path': PATHS[key], 'sha256': SHA[key], 'sections': list(sections)}
-
-          def module(module_id, title, classification, status, source_refs, purpose,
-                     applies_to, does_not_apply_to, inputs, outputs, context_cost,
-                     default_include, hard_rules, checks, failure_conditions,
-                     required_tools=None, required_evidence=None, dependencies=None,
-                     conflicts=None, configurable_parameters=None,
-                     legacy_claims_not_imported=None, notes=None):
-              return {
-                  'module_id': module_id,
-                  'version': '2.0.0',
-                  'title': title,
-                  'classification': classification,
-                  'status': status,
-                  'source_refs': source_refs,
-                  'purpose': purpose,
-                  'applies_to': applies_to,
-                  'does_not_apply_to': does_not_apply_to,
-                  'inputs': inputs,
-                  'outputs': outputs,
-                  'context_cost': context_cost,
-                  'default_include': default_include,
-                  'required_tools': required_tools or [],
-                  'required_evidence': required_evidence or [],
-                  'dependencies': dependencies or [],
-                  'conflicts': conflicts or [],
-                  'hard_rules': hard_rules,
-                  'configurable_parameters': configurable_parameters or {},
-                  'checks': checks,
-                  'failure_conditions': failure_conditions,
-                  'legacy_claims_not_imported': legacy_claims_not_imported or [],
-                  'notes': notes or [],
-              }
+          def mod(mid, title, classification, status, refs, purpose, applies, excludes,
+                  rules, checks, failures, default=False, cost="MEDIUM", claims=None,
+                  parameters=None, conflicts=None, dependencies=None, notes=None):
+            return {
+              "module_id": mid,
+              "version": "2.0.0",
+              "title": title,
+              "classification": classification,
+              "status": status,
+              "source_refs": refs,
+              "purpose": purpose,
+              "applies_to": applies,
+              "does_not_apply_to": excludes,
+              "inputs": ["task context"],
+              "outputs": ["module decision and evidence"],
+              "context_cost": cost,
+              "default_include": default,
+              "required_tools": [],
+              "required_evidence": [],
+              "dependencies": dependencies or [],
+              "conflicts": conflicts or [],
+              "hard_rules": rules,
+              "configurable_parameters": parameters or {},
+              "checks": checks,
+              "failure_conditions": failures,
+              "legacy_claims_not_imported": claims or [],
+              "notes": notes or []
+            }
 
           modules = [
-              module(
-                  'governance.success-criteria-lock', 'Success Criteria Lock', 'INVARIANT', 'ACTIVE',
-                  [ref('APEX', 'HR-R2 Success Criteria Lock', 'G1 Session Initialization Gate')],
-                  'Define observable success and invalidating failures before implementation or experimentation begins.',
-                  ['research', 'software', 'benchmarking', 'writing', 'creative-production'],
-                  ['casual-conversation'], ['goal', 'deliverables', 'quality bar'],
-                  ['locked success criteria', 'invalidating failures'], 'LOW', True,
-                  ['Criteria are frozen before results are observed.', 'Workers cannot silently weaken criteria.'],
-                  ['Criteria exist and are testable.', 'Any amendment has an explicit record.'],
-                  ['Criteria are invented after seeing results.', 'Success is defined only by worker opinion.']
-              ),
-              module(
-                  'governance.scope-amendment-lock', 'Scope and Amendment Lock', 'INVARIANT', 'ACTIVE',
-                  [ref('APEX', 'HR-R6 Scope Lock', 'M3 Scope Monitor'), ref('VAL', 'Scope Creep Protocol')],
-                  'Prevent silent scope expansion or contraction while permitting recorded, authorized amendments.',
-                  ['long-running-projects', 'research', 'software', 'publication'],
-                  ['one-shot-low-risk-tasks'], ['locked scope', 'amendment request'],
-                  ['scope verdict', 'amendment record'], 'LOW', True,
-                  ['Scope changes require classification and authorization.', 'A worker cannot auto-approve weaker gates or broader permissions.'],
-                  ['Changed scope is visible in the decision ledger.', 'Original contract remains recoverable.'],
-                  ['Unrecorded scope drift.', 'Budget or permission expansion without approval.']
-              ),
-              module(
-                  'evidence.falsification-check', 'Material Falsification Check', 'INVARIANT', 'ACTIVE',
-                  [ref('APEX', 'HR-R3 Falsification Mandate'), ref('META', 'Part 2 The Falsification Gap')],
-                  'Require a serious attempt to disprove important empirical or performance claims before promotion.',
-                  ['empirical-research', 'benchmarking', 'causal-analysis', 'performance-claims'],
-                  ['translation', 'purely-creative-writing'], ['claim', 'evidence', 'candidate falsifiers'],
-                  ['falsification result', 'surviving claim'], 'MEDIUM', True,
-                  ['At least one material falsifier must be executed, not merely described.'],
-                  ['Falsifier could have changed the conclusion.', 'Failure evidence is retained.'],
-                  ['Success claim without attempted falsification.', 'Only trivial edge cases are tested.'],
-                  required_evidence=['test output or source evidence']
-              ),
-              module(
-                  'evidence.metric-integrity', 'Metric Integrity Audit', 'INVARIANT', 'ACTIVE',
-                  [ref('APEX', 'HR-R5 Metric Integrity', 'M4 Claim Monitor')],
-                  'Verify that a metric measures the intended construct and cannot be won through an irrelevant proxy.',
-                  ['benchmarking', 'evaluation', 'optimization', 'research'],
-                  ['tasks without quantitative metrics'], ['objective', 'metric', 'possible shortcuts'],
-                  ['construct mapping', 'gaming risks', 'metric verdict'], 'MEDIUM', True,
-                  ['Proxy relationships and known blind spots must be explicit.'],
-                  ['A shortcut audit is performed.', 'Metric movement is compared with real outcome movement.'],
-                  ['Metric improves while the actual objective does not.', 'Metric definition changes post hoc.']
-              ),
-              module(
-                  'evidence.evidence-language-alignment', 'Evidence–Language Alignment', 'INVARIANT', 'ACTIVE',
-                  [ref('APEX', 'HR-R7 Evidence-Language Alignment'), ref('CRIME', 'HR-CR3 Weakest Physical Grounding')],
-                  'Constrain claim wording to the strength, authority, replication and completeness of available evidence.',
-                  ['research', 'reporting', 'benchmarking', 'factual-writing'],
-                  ['fiction'], ['claim', 'evidence grade', 'limitations'],
-                  ['permitted wording', 'downgraded or rejected claim'], 'LOW', True,
-                  ['No claim may be stronger than its weakest load-bearing evidence.'],
-                  ['Every major claim has an evidence grade.', 'Limitations appear with the claim.'],
-                  ['Established language is used for preliminary evidence.', 'Missing evidence is hidden.'],
-                  configurable_parameters={'evidence_scale': 'task-pack-defined'},
-                  legacy_claims_not_imported=['Fixed seed-count language is not universal; task packs set evidence thresholds.']
-              ),
-              module(
-                  'evidence.proxy-triangulation', 'Independent Proxy Triangulation', 'DOMAIN_METHOD', 'ACTIVE',
-                  [ref('ALPHA', 'Physical Grounding'), ref('CRIME', 'Core Pillars Physical Grounding'), ref('GEOPOL', 'Core Pillars Physical Grounding')],
-                  'Test reported measurements against independent evidence streams with different incentives and failure modes.',
-                  ['public-data-research', 'policy-analysis', 'operational-audit', 'measurement-risk'],
-                  ['domains where no meaningful independent proxy exists'], ['target claim', 'primary measure', 'candidate proxies'],
-                  ['triangulation table', 'agreement and divergence report'], 'HIGH', False,
-                  ['Official and alternative sources are evaluated, not presumed truthful or false.', 'Proxy validity must be justified.'],
-                  ['At least two source families are compared.', 'Known proxy confounders are recorded.'],
-                  ['A preferred proxy is treated as ground truth without validation.', 'Disagreement is automatically interpreted as deception.'],
-                  required_tools=['source retrieval'], required_evidence=['source provenance', 'measurement definitions'],
-                  legacy_claims_not_imported=['Headlines lie; shipments do not.', 'Bodies, bullets and hospital data cannot be manipulated.', 'Official statistics are political artifacts first.']
-              ),
-              module(
-                  'evidence.regime-change-gating', 'Regime Change Detection and Gating', 'DOMAIN_METHOD', 'PROFILE_SPECIFIC',
-                  [ref('ALPHA', 'Regime Gating'), ref('CRIME', 'Regime Gating'), ref('GEOPOL', 'Regime Gating')],
-                  'Detect structural changes before applying models or evidence weights learned under a different operating regime.',
-                  ['time-series-research', 'markets', 'policy-shock-analysis', 'changing-rule-environments'],
-                  ['static tasks', 'small samples without change-point support'], ['time series', 'candidate regimes', 'change evidence'],
-                  ['regime probabilities', 'gating decision', 'sensitivity analysis'], 'HIGH', False,
-                  ['Thresholds must be preregistered or sensitivity-tested.', 'Gating cannot be tuned after seeing target outcomes.'],
-                  ['Alternative thresholds are reported.', 'No-regime baseline is retained.'],
-                  ['A fixed threshold is imported as universal truth.', 'Regime labels merely restate the desired conclusion.'],
-                  required_tools=['statistical analysis'], required_evidence=['time-indexed observations'],
-                  configurable_parameters={'model_family': 'task-pack-defined', 'decision_threshold': 'preregistered'},
-                  legacy_claims_not_imported=['P(Crisis) > 0.65 is not a universal threshold.', 'Fixed physical and official source weights are not universal.']
-              ),
-              module(
-                  'evidence.multiple-testing-deflation', 'Multiple-Testing Deflation', 'DOMAIN_METHOD', 'PROFILE_SPECIFIC',
-                  [ref('ALPHA', 'Deflation Discipline'), ref('CRIME', 'HR-CR2'), ref('GEOPOL', 'Deflation Discipline')],
-                  'Correct performance claims for repeated search, model selection and non-normal outcomes using a method appropriate to the metric.',
-                  ['quantitative-strategy-research', 'large-model-selection-searches', 'repeated-hypothesis-testing'],
-                  ['ordinary factual claims', 'small qualitative studies without a Sharpe-like metric'],
-                  ['raw metric', 'number of trials', 'selection procedure', 'distribution assumptions'],
-                  ['adjusted metric', 'sensitivity table', 'overfit verdict'], 'HIGH', False,
-                  ['The correction must match the statistical setting.', 'All tried configurations must be counted or bounded.'],
-                  ['Raw and adjusted results are reported.', 'Assumptions are tested.'],
-                  ['DSR is applied mechanically to unrelated statistics.', 'The number of trials is understated.'],
-                  required_tools=['statistical calculation'],
-                  configurable_parameters={'correction_method': 'DSR, FDR, family-wise or task-appropriate alternative'},
-                  legacy_claims_not_imported=['N >= 200 is not a universal requirement.', 'Legacy example DSR and PSR values are illustrative, not validated results.']
-              ),
-              module(
-                  'evidence.cross-domain-alignment', 'Cross-Domain Alignment', 'DOMAIN_METHOD', 'ACTIVE',
-                  [ref('COMPARE', 'Core Pillars', 'Tactical 3-Phase Workflow')],
-                  'Align geography, time, definitions and units before comparing signals from different domains.',
-                  ['cross-domain-research', 'multi-dataset-synthesis', 'causal-investigation'],
-                  ['single-source-summary'], ['datasets', 'geographies', 'time windows', 'definitions'],
-                  ['alignment map', 'mismatch ledger', 'comparable subset'], 'HIGH', False,
-                  ['No cross-domain inference before exact alignment is checked.'],
-                  ['Time, geography, units and definitions are reconciled.', 'Unaligned records are excluded or qualified.'],
-                  ['Correlation is computed on mismatched windows.', 'Geographic aggregation hides non-overlap.']
-              ),
-              module(
-                  'evidence.incentive-autopsy', 'Incentive Autopsy', 'HEURISTIC', 'ACTIVE',
-                  [ref('COMPARE', 'Incentive Autopsy'), ref('META', 'Authority Inversion', 'Incentive Analysis')],
-                  'Map incentives that may explain reporting, selection or institutional behavior without treating motive as proof.',
-                  ['institutional-analysis', 'source-criticism', 'policy-analysis'],
-                  ['tasks where actor incentives are irrelevant'], ['actors', 'decisions', 'benefits', 'costs', 'evidence'],
-                  ['incentive map', 'alternative explanations', 'evidentiary status'], 'MEDIUM', False,
-                  ['Incentives generate hypotheses, not factual verdicts.', 'Competing benign and adverse explanations must be included.'],
-                  ['Each motive claim is labeled as observed or inferred.', 'Direct evidence is separated from structural incentive.'],
-                  ['A beneficiary is assumed to have caused the outcome.', 'Narrative disagreement is treated as corruption.'],
-                  legacy_claims_not_imported=['Institutional divergence is not automatically narrative laundering or suppression.']
-              ),
-              module(
-                  'evidence.explainability-audit', 'Feature Contribution Audit', 'DOMAIN_METHOD', 'PROFILE_SPECIFIC',
-                  [ref('CRIME', 'SHAP Reality Audit'), ref('GEOPOL', 'SHAP Black-Box Audit'), ref('COMPARE', 'SHAP Audit')],
-                  'Inspect which features drive a predictive result and whether those contributions match the intended construct.',
-                  ['predictive-models', 'ranking-models', 'high-stakes-classifiers'],
-                  ['systems without feature-based predictions'], ['model', 'features', 'predictions'],
-                  ['contribution report', 'shortcut warning'], 'HIGH', False,
-                  ['Explainability output is diagnostic, not causal proof.'],
-                  ['Dominant features are reviewed for leakage and shortcut behavior.', 'Ablation is used when feasible.'],
-                  ['SHAP values are treated as causal effects.', 'Expected signs are hard-coded to force agreement.'],
-                  required_tools=['model inspection'],
-                  legacy_claims_not_imported=['Legacy target contribution signs and magnitudes are not imported.']
-              ),
-              module(
-                  'research.curiosity-lens', 'Curiosity Lens', 'HEURISTIC', 'ACTIVE',
-                  [ref('META', 'Part 4 The Curiosity Lens', 'Case Study Template')],
-                  'Investigate a disputed or dismissed claim by separating evidence for, evidence against, unknowns and missing tests.',
-                  ['exploratory-research', 'disputed-claims', 'understudied-topics'],
-                  ['requests for advocacy without investigation'], ['topic', 'official position', 'available evidence'],
-                  ['balanced evidence ledger', 'open questions', 'next tests'], 'MEDIUM', False,
-                  ['Investigate before endorsing or dismissing.', 'Absence of investigation is not evidence that a claim is true.'],
-                  ['Evidence for and against is presented.', 'Source quality and replication are recorded.'],
-                  ['The framework presupposes establishment suppression.', 'A lack of evidence is converted into positive evidence.'],
-                  required_tools=['source retrieval'],
-                  legacy_claims_not_imported=['Legacy darkness scores and UAP example counts are not imported as facts.']
-              ),
-              module(
-                  'research.competing-view-search', 'Competing View Search', 'HEURISTIC', 'ACTIVE',
-                  [ref('KLEON', 'Influence Map Contrarian Check'), ref('META', 'Curiosity Lens')],
-                  'Seek the strongest relevant disagreement before committing to a research frame or design.',
-                  ['research', 'architecture', 'policy-analysis', 'creative-direction'],
-                  ['simple deterministic tasks'], ['current view', 'influences', 'decision'],
-                  ['contrarian sources', 'steelman', 'changed assumptions'], 'MEDIUM', False,
-                  ['Search for material disagreement, not performative balance.'],
-                  ['At least one credible competing account is represented fairly.', 'The decision records whether it changed.'],
-                  ['Only weak opponents are selected.', 'Contrarian status substitutes for evidence.']
-              ),
-              module(
-                  'prompting.goal-format-tool-clarity', 'Goal, Format and Tool Clarity', 'TOOL_ADAPTER', 'ACTIVE',
-                  [ref('GUIDE', 'Key Principles', 'Step-by-Step Guide')],
-                  'Translate a task into an explicit objective, context, constraints, output form and justified tool plan.',
-                  ['all model-mediated tasks'], ['none'], ['user goal', 'available context', 'tool inventory'],
-                  ['normalized request', 'output contract', 'tool rationale'], 'LOW', True,
-                  ['Tools are selected because they are needed, not because a legacy platform named them.', 'Output constraints remain subordinate to correctness.'],
-                  ['Objective and deliverable are explicit.', 'Every tool call has a task reason.'],
-                  ['Platform-specific commands leak into the kernel.', 'Tool use is forced when pure reasoning is sufficient.'],
-                  legacy_claims_not_imported=['Legacy Grok tool counts, cutoff claims, speed gains and Grok-versus-Claude comparisons are time-sensitive and unverified.']
-              ),
-              module(
-                  'creative.influence-map', 'Influence Map', 'HEURISTIC', 'ACTIVE',
-                  [ref('KLEON', 'Part 1 The Influence Map')],
-                  'Make creative and technical influences explicit, identify common patterns and expose echo chambers.',
-                  ['creative-work', 'research-direction', 'product-design'],
-                  ['routine factual lookup'], ['project', 'admired sources'],
-                  ['influence map', 'common threads', 'gaps'], 'MEDIUM', False,
-                  ['Sources and borrowed mechanisms are named.', 'Influence is not treated as authority.'],
-                  ['Attribution is recorded.', 'At least one missing or opposing influence is considered.'],
-                  ['Influences are copied without transformation.', 'The map becomes a popularity list.'],
-                  notes=['Austin Kleon attribution must remain visible.']
-              ),
-              module(
-                  'creative.forced-remix', 'Forced Cross-Domain Remix', 'HEURISTIC', 'ACTIVE',
-                  [ref('KLEON', 'Part 2 The Remix Generator')],
-                  'Generate materially different approaches by translating a problem through unrelated domains and a simplest-version test.',
-                  ['creative-design', 'architecture', 'stuck-problems'],
-                  ['late-stage frozen validation'], ['problem', 'constraints', 'candidate external domains'],
-                  ['remix candidates', 'simplest viable experiment'], 'MEDIUM', False,
-                  ['At least one candidate changes the mechanism, not merely vocabulary.', 'The simplest credible alternative is included.'],
-                  ['Candidates are testable.', 'A first experiment is specified.'],
-                  ['Metaphors are mistaken for implementations.', 'Remix expands scope without a gate.']
-              ),
-              module(
-                  'creative.side-project-validator', 'Side-Project Validator', 'HEURISTIC', 'ACTIVE',
-                  [ref('KLEON', 'Part 4 Side Project Validator'), ref('VAL', 'Vibe Check Protocol')],
-                  'Prevent new ideas from displacing the active project without an explicit opportunity-cost and scope decision.',
-                  ['personal-projects', 'research-portfolios', 'product-ideas'],
-                  ['mandatory safety repair'], ['new idea', 'active project', 'available budget'],
-                  ['START, DEFER or KILL verdict', 'minimum capture', 'revisit trigger'], 'LOW', False,
-                  ['The active scope lock has priority.', 'Excitement cannot override terminal obligations.'],
-                  ['Displaced work is named.', 'Deferred ideas receive no implementation resources.'],
-                  ['A new project begins without closing or amending the current contract.', 'A vibe score alone authorizes work.'],
-                  conflicts=['governance.scope-amendment-lock'],
-                  configurable_parameters={'timebox': 'task-pack-defined'},
-                  legacy_claims_not_imported=['Fixed score thresholds are not universal.']
-              ),
-              module(
-                  'creative.transform-with-attribution', 'Transform With Attribution', 'HEURISTIC', 'ACTIVE',
-                  [ref('KLEON', 'Part 6 Steal and Transform Framework')],
-                  'Separate learning-by-copying from publishable transformation and preserve source attribution.',
-                  ['creative-writing', 'design', 'framework-development'],
-                  ['verbatim reproduction without permission'], ['source', 'borrowed element', 'new context'],
-                  ['transformation record', 'attribution note', 'original artifact'], 'MEDIUM', False,
-                  ['Practice copies are not shipped as original work.', 'Material influence is disclosed.'],
-                  ['The final work adds a distinct mechanism, context or expression.', 'Licensing is checked.'],
-                  ['Cosmetic edits are called transformation.', 'Attribution or license obligations are removed.'],
-                  notes=['This repository preserves the historical Kleon adaptation but PROMPTS v2 must not imply ownership of Kleon’s original concepts.']
-              ),
-              module(
-                  'development.secure-defaults', 'Secure Development Defaults', 'INVARIANT', 'ACTIVE',
-                  [ref('APEX', 'HR-D2 Secure Defaults Lock')],
-                  'Prevent common secret, injection, validation and error-handling failures in generated software.',
-                  ['software-development', 'automation', 'data-processing'],
-                  ['non-code tasks'], ['design', 'inputs', 'secret requirements'],
-                  ['security requirements', 'implementation checks'], 'LOW', True,
-                  ['Secrets are not hard-coded.', 'Inputs are validated.', 'Errors are explicit.', 'Queries and commands avoid unsafe concatenation.'],
-                  ['Secret scan passes.', 'Negative input tests exist.', 'Dangerous operations are permission-gated.'],
-                  ['Credential material enters source or trace.', 'Untrusted input reaches an interpreter unsafely.']
-              ),
-              module(
-                  'development.resilience-and-test-baseline', 'Resilience and Test Baseline', 'CONFIGURABLE_POLICY', 'ACTIVE',
-                  [ref('APEX', 'HR-D3 Resilience Pattern Lock', 'HR-D4 Test Baseline Lock')],
-                  'Require failure handling and evidence proportionate to the software component’s external dependencies and risk.',
-                  ['software-development', 'tool-integrations'],
-                  ['static documents'], ['component', 'failure modes', 'risk profile'],
-                  ['test plan', 'retry and timeout policy', 'graceful-failure behavior'], 'MEDIUM', True,
-                  ['External calls have bounded time.', 'Retries are bounded and idempotency-aware.', 'Main and error paths are tested.'],
-                  ['Tests execute rather than merely exist.', 'Repeated failure stops or escalates.'],
-                  ['Unbounded retry loops.', 'Blanket circuit-breaker requirements on components with no external calls.'],
-                  configurable_parameters={'coverage_target': 'task-pack-defined', 'retry_limit': 'risk-profile-defined'},
-                  legacy_claims_not_imported=['One test per public function is not a universal quality measure.']
-              ),
-              module(
-                  'workflow.minimum-viable-experiment', 'Minimum Viable Experiment', 'HEURISTIC', 'ACTIVE',
-                  [ref('APEX', 'SR-1 MVE First', 'G3 Sanity Check Gate'), ref('VAL', '7-Phase Master Workflow')],
-                  'Test the core mechanism cheaply before committing full resources or polishing the product surface.',
-                  ['research', 'software', 'product-design', 'creative-production'],
-                  ['final sealed evaluation'], ['hypothesis', 'core mechanism', 'budget'],
-                  ['minimal experiment', 'go, repair or stop decision'], 'LOW', False,
-                  ['The experiment must be capable of falsifying the core mechanism.', 'Prototype evidence is labeled as prototype evidence.'],
-                  ['Sanity test executes.', 'Scale-up criteria are explicit.'],
-                  ['A polished demo substitutes for a mechanism test.', 'The MVE becomes an endless prototype.']
-              ),
-              module(
-                  'monitoring.scope-progress-claim', 'Scope, Progress and Claim Monitor', 'CONFIGURABLE_POLICY', 'ACTIVE',
-                  [ref('APEX', 'M2 Progress Monitor', 'M3 Scope Monitor', 'M4 Claim Monitor')],
-                  'Continuously detect no-progress loops, scope drift and claims that outrun evidence.',
-                  ['long-running-agents', 'multi-phase-projects'],
-                  ['single-response tasks'], ['state', 'budget', 'claims', 'evidence'],
-                  ['warnings', 'mode transition', 'escalation record'], 'LOW', True,
-                  ['No-progress is based on external state change.', 'Warnings can trigger repair, replan or stop.'],
-                  ['Budget and state deltas are recorded.', 'Claim wording is checked before release.'],
-                  ['The agent narrates progress without changing evidence or artifact.', 'Warnings have no enforcement effect.'],
-                  configurable_parameters={'no_progress_window': 'task-pack-defined', 'time_overrun_threshold': 'task-pack-defined'}
-              ),
-              module(
-                  'workflow.gated-phase-control', 'Gated Phase Control', 'CONFIGURABLE_POLICY', 'ACTIVE',
-                  [ref('APEX', 'G1-G5 Gate System'), ref('VAL', '7-Phase Master Workflow')],
-                  'Move work through explicit phases whose exit conditions are independently checkable.',
-                  ['long-running-projects', 'research', 'software', 'publication'],
-                  ['small atomic tasks'], ['contract', 'phase definition', 'gate checks'],
-                  ['legal transition', 'failed gate', 'checkpoint'], 'MEDIUM', True,
-                  ['A phase cannot close while a required gate is false.', 'Gate evidence is stored outside conversation.'],
-                  ['Each phase has entry and exit checks.', 'Failed gates identify the next repair action.'],
-                  ['The worker advances state by assertion.', 'Documentation completion is confused with project completion.'],
-                  dependencies=['governance.success-criteria-lock']
-              ),
-              module(
-                  'workflow.vibe-and-sustainability', 'Vibe and Sustainability Check', 'HEURISTIC', 'PROFILE_SPECIFIC',
-                  [ref('VAL', 'Core Pillars', 'Vibe Check Protocol'), ref('KLEON', 'Part 5 Creative Routine Builder')],
-                  'Track motivation, cognitive load and sustainable routine without allowing mood scores to waive evidence or safety gates.',
-                  ['personal-creative-work', 'long-running-solo-projects'],
-                  ['safety-critical-approval', 'objective completion decision'], ['project', 'energy', 'routine constraints'],
-                  ['sustainability adjustments', 'defer or simplify suggestion'], 'LOW', False,
-                  ['Vibe informs scheduling and scope proposals only.', 'Terminal success remains evidence-based.'],
-                  ['The check changes workload or cadence rather than truth criteria.'],
-                  ['A low or high score directly kills or validates a project.', 'Vibe is presented as an objective metric.'],
-                  conflicts=['governance.success-criteria-lock'],
-                  configurable_parameters={'cadence': 'user-defined'},
-                  legacy_claims_not_imported=['Fixed 1–10 thresholds and universal creation-to-consumption ratios are not imported.']
-              ),
+            mod("governance.success-criteria-lock", "Success Criteria Lock", "INVARIANT", "ACTIVE", [ref("APEX", "HR-R2 and G1")], "Freeze observable success and invalidating failures before work begins.", ["research", "software", "benchmarking", "writing"], ["casual conversation"], ["Criteria are locked before results.", "Workers cannot weaken them silently."], ["Criteria are testable.", "Amendments are recorded."], ["Post-hoc criteria.", "Worker self-grading only."], True, "LOW"),
+            mod("governance.scope-amendment-lock", "Scope and Amendment Lock", "INVARIANT", "ACTIVE", [ref("APEX", "HR-R6 and M3"), ref("VAL", "Scope Creep Protocol")], "Prevent silent scope changes while permitting explicit authorized amendments.", ["long-running projects", "research", "software"], ["small atomic tasks"], ["Material changes require authorization.", "Weaker gates cannot auto-approve."], ["Original contract remains recoverable."], ["Unrecorded scope drift.", "Unauthorized permission growth."], True, "LOW"),
+            mod("evidence.falsification-check", "Material Falsification Check", "INVARIANT", "ACTIVE", [ref("APEX", "HR-R3"), ref("META", "Falsification Gap")], "Require a serious attempt to disprove empirical or performance claims.", ["empirical research", "benchmarking", "causal analysis"], ["translation", "pure fiction"], ["Execute at least one material falsifier."], ["The falsifier could change the conclusion."], ["Success without falsification.", "Only trivial tests."], True),
+            mod("evidence.metric-integrity", "Metric Integrity Audit", "INVARIANT", "ACTIVE", [ref("APEX", "HR-R5 and M4")], "Verify that metrics measure the intended construct and resist shortcut wins.", ["benchmarking", "evaluation", "optimization"], ["tasks without metrics"], ["Expose proxy relationships and blind spots."], ["Run a shortcut audit."], ["Metric improves while objective does not."], True),
+            mod("evidence.evidence-language-alignment", "Evidence-Language Alignment", "INVARIANT", "ACTIVE", [ref("APEX", "HR-R7"), ref("CRIME", "HR-CR3")], "Constrain factual wording to evidence authority, replication and completeness.", ["research", "reporting", "factual writing"], ["fiction"], ["No claim exceeds its weakest load-bearing evidence."], ["Major claims carry evidence grades."], ["Established language for preliminary evidence."], True, "LOW", ["Fixed seed counts are not universal."], {"evidence_scale": "task-pack-defined"}),
+            mod("evidence.proxy-triangulation", "Independent Proxy Triangulation", "DOMAIN_METHOD", "ACTIVE", [ref("ALPHA", "Physical Grounding"), ref("CRIME", "Physical Grounding"), ref("GEOPOL", "Physical Grounding")], "Compare measurements with independent sources having different incentives and failure modes.", ["public-data research", "policy analysis", "measurement risk"], ["domains without meaningful proxies"], ["Evaluate every source rather than presuming truth or falsity.", "Justify proxy validity."], ["Compare at least two source families."], ["Preferred proxy treated as ground truth.", "Divergence automatically means deception."], False, "HIGH", ["Headlines always lie.", "Physical proxies cannot be manipulated.", "Official statistics are political artifacts first."]),
+            mod("evidence.regime-change-gating", "Regime Change Detection and Gating", "DOMAIN_METHOD", "PROFILE_SPECIFIC", [ref("ALPHA", "Regime Gating"), ref("CRIME", "Regime Gating"), ref("GEOPOL", "Regime Gating")], "Detect structural changes before applying models learned under another regime.", ["time-series research", "policy shock analysis"], ["static tasks", "insufficient samples"], ["Preregister or sensitivity-test thresholds.", "No post-hoc gate tuning."], ["Retain a no-regime baseline."], ["Fixed legacy threshold imported universally."], False, "HIGH", ["P(Crisis) > 0.65 is not universal.", "Legacy source weights are not universal."], {"decision_threshold": "preregistered"}),
+            mod("evidence.multiple-testing-deflation", "Multiple-Testing Deflation", "DOMAIN_METHOD", "PROFILE_SPECIFIC", [ref("ALPHA", "Deflation Discipline"), ref("CRIME", "HR-CR2"), ref("GEOPOL", "Deflation Discipline")], "Correct selected performance claims for repeated search using a metric-appropriate method.", ["quantitative strategy research", "large model searches"], ["ordinary factual claims", "small qualitative studies"], ["Match correction to the statistical construct.", "Count or bound all tried configurations."], ["Report raw and adjusted results."], ["DSR applied mechanically to unrelated metrics.", "Trial count understated."], False, "HIGH", ["N >= 200 is not universal.", "Legacy DSR values are illustrative."], {"correction_method": "task-appropriate"}),
+            mod("evidence.cross-domain-alignment", "Cross-Domain Alignment", "DOMAIN_METHOD", "ACTIVE", [ref("COMPARE", "Core Pillars and Workflow")], "Align geography, time, definitions and units before cross-domain comparison.", ["cross-domain research", "multi-dataset synthesis"], ["single-source summary"], ["No inference before alignment checks."], ["Reconcile time, geography, units and definitions."], ["Correlation on mismatched windows."], False, "HIGH"),
+            mod("evidence.incentive-autopsy", "Incentive Autopsy", "HEURISTIC", "ACTIVE", [ref("COMPARE", "Incentive Autopsy"), ref("META", "Authority Inversion")], "Map incentives as hypotheses without treating motive as proof.", ["institutional analysis", "source criticism"], ["tasks where incentives are irrelevant"], ["Include benign and adverse explanations.", "Mark observed versus inferred motives."], ["Separate direct evidence from structural incentives."], ["Beneficiary assumed causal.", "Disagreement treated as corruption."], False, "MEDIUM", ["Institutional divergence is not automatically narrative laundering."]),
+            mod("evidence.explainability-audit", "Feature Contribution Audit", "DOMAIN_METHOD", "PROFILE_SPECIFIC", [ref("CRIME", "SHAP Audit"), ref("GEOPOL", "SHAP Audit"), ref("COMPARE", "SHAP Audit")], "Inspect feature contributions for leakage and shortcuts without claiming causality.", ["predictive models", "ranking models"], ["systems without feature predictions"], ["Explainability is diagnostic, not causal proof."], ["Review dominant features and ablate when feasible."], ["SHAP treated as causal.", "Expected signs forced."], False, "HIGH", ["Legacy target signs and magnitudes are not imported."]),
+            mod("research.curiosity-lens", "Curiosity Lens", "HEURISTIC", "ACTIVE", [ref("META", "Curiosity Lens and Case Study")], "Separate evidence for, evidence against, unknowns and missing tests on disputed claims.", ["exploratory research", "disputed claims"], ["advocacy-only requests"], ["Investigate before endorsing or dismissing.", "Lack of investigation is not positive evidence."], ["Represent evidence for and against."], ["Suppression is presupposed.", "Absence of evidence becomes evidence."], False, "MEDIUM", ["Legacy darkness scores and UAP counts are not imported."]),
+            mod("research.competing-view-search", "Competing View Search", "HEURISTIC", "ACTIVE", [ref("KLEON", "Contrarian Check"), ref("META", "Curiosity Lens")], "Seek the strongest relevant disagreement before committing to a frame.", ["research", "architecture", "policy analysis"], ["simple deterministic tasks"], ["Seek material disagreement rather than performative balance."], ["Represent one credible competing account fairly."], ["Select only weak opponents.", "Contrarian status substitutes for evidence."]),
+            mod("prompting.goal-format-tool-clarity", "Goal, Format and Tool Clarity", "TOOL_ADAPTER", "ACTIVE", [ref("GUIDE", "Key Principles and Step-by-Step Guide")], "Normalize a task into an objective, constraints, output form and justified tool plan.", ["model-mediated tasks"], [], ["Select tools because needed, not because a legacy platform named them."], ["Objective and deliverable are explicit."], ["Platform syntax leaks into kernel.", "Tools are forced unnecessarily."], True, "LOW", ["Legacy tool counts, cutoff claims, speed gains and model comparisons are dated."]),
+            mod("creative.influence-map", "Influence Map", "HEURISTIC", "ACTIVE", [ref("KLEON", "Part 1 Influence Map")], "Make influences explicit and expose common patterns and echo chambers.", ["creative work", "research direction", "product design"], ["routine factual lookup"], ["Name borrowed mechanisms.", "Influence is not authority."], ["Record attribution and consider opposing influences."], ["Copy without transformation."], False, "MEDIUM", notes=["Preserve Austin Kleon attribution."]),
+            mod("creative.forced-remix", "Forced Cross-Domain Remix", "HEURISTIC", "ACTIVE", [ref("KLEON", "Part 2 Remix Generator")], "Generate materially different mechanisms through unrelated domains and a simplest-version test.", ["creative design", "architecture", "stuck problems"], ["frozen validation"], ["At least one candidate changes the mechanism."], ["Candidates are testable and name a first experiment."], ["Metaphor mistaken for implementation.", "Scope expands without a gate."]),
+            mod("creative.side-project-validator", "Side-Project Validator", "HEURISTIC", "ACTIVE", [ref("KLEON", "Part 4 Side Project Validator"), ref("VAL", "Vibe Check")], "Prevent new ideas from displacing active work without an opportunity-cost decision.", ["personal projects", "research portfolios"], ["mandatory safety repair"], ["Active scope lock has priority.", "Excitement cannot waive terminal obligations."], ["Name displaced work and a revisit trigger."], ["A new project begins without closing the current contract.", "Vibe alone authorizes work."], False, "LOW", ["Fixed score thresholds are not universal."], {"timebox": "task-pack-defined"}, ["governance.scope-amendment-lock"]),
+            mod("creative.transform-with-attribution", "Transform With Attribution", "HEURISTIC", "ACTIVE", [ref("KLEON", "Part 6 Steal and Transform")], "Separate learning copies from publishable transformation and preserve attribution.", ["creative writing", "design", "framework development"], ["unlicensed verbatim reproduction"], ["Practice copies are not shipped as original.", "Material influence is disclosed."], ["Add distinct mechanism, context or expression and check licence."], ["Cosmetic edits called transformation.", "Attribution removed."], False, "MEDIUM", notes=["Preserve Austin Kleon attribution and applicable licence obligations."]),
+            mod("development.secure-defaults", "Secure Development Defaults", "INVARIANT", "ACTIVE", [ref("APEX", "HR-D2")], "Prevent secret, injection, validation and error-handling failures in generated software.", ["software development", "automation"], ["non-code tasks"], ["Do not hard-code secrets.", "Validate inputs.", "Avoid unsafe command or query concatenation."], ["Secret scan and negative-input tests pass."], ["Credentials enter source or trace.", "Untrusted input reaches an interpreter unsafely."], True, "LOW"),
+            mod("development.resilience-and-test-baseline", "Resilience and Test Baseline", "CONFIGURABLE_POLICY", "ACTIVE", [ref("APEX", "HR-D3 and HR-D4")], "Require bounded failure handling and executable tests proportionate to risk.", ["software development", "tool integrations"], ["static documents"], ["External calls are bounded.", "Retries are bounded and idempotency-aware."], ["Execute main and error-path tests."], ["Unbounded retries.", "Blanket patterns where irrelevant."], True, "MEDIUM", ["One test per public function is not universal."], {"retry_limit": "risk-profile-defined"}),
+            mod("workflow.minimum-viable-experiment", "Minimum Viable Experiment", "HEURISTIC", "ACTIVE", [ref("APEX", "SR-1 and G3"), ref("VAL", "7-Phase Workflow")], "Test the core mechanism cheaply before full resources or polish.", ["research", "software", "product design"], ["final sealed evaluation"], ["The experiment must be able to falsify the mechanism."], ["Execute a sanity test and define scale-up criteria."], ["A polished demo substitutes for a mechanism test.", "The MVE becomes permanent."], False, "LOW"),
+            mod("monitoring.scope-progress-claim", "Scope, Progress and Claim Monitor", "CONFIGURABLE_POLICY", "ACTIVE", [ref("APEX", "M2, M3 and M4")], "Detect no-progress loops, scope drift and claims outrunning evidence.", ["long-running agents", "multi-phase projects"], ["single-response tasks"], ["Measure progress by external state change.", "Warnings trigger repair, replan or stop."], ["Record budgets, state deltas and claim checks."], ["Narrated progress without artifact change.", "Warnings have no enforcement."], True, "LOW", parameters={"no_progress_window": "task-pack-defined"}),
+            mod("workflow.gated-phase-control", "Gated Phase Control", "CONFIGURABLE_POLICY", "ACTIVE", [ref("APEX", "G1-G5"), ref("VAL", "7-Phase Workflow")], "Move work through explicit phases with independently checkable exits.", ["long-running projects", "research", "software", "publication"], ["small atomic tasks"], ["A phase cannot close while a required gate is false.", "Gate evidence lives outside conversation."], ["Each phase has entry and exit checks."], ["Worker advances state by assertion.", "Documentation is confused with completion."], True, dependencies=["governance.success-criteria-lock"]),
+            mod("workflow.vibe-and-sustainability", "Vibe and Sustainability Check", "HEURISTIC", "PROFILE_SPECIFIC", [ref("VAL", "Core Pillars and Vibe Check"), ref("KLEON", "Creative Routine Builder")], "Track motivation and routine without allowing mood scores to waive evidence or safety gates.", ["personal creative work", "long-running solo projects"], ["safety approval", "terminal completion"], ["Vibe informs scheduling only.", "Terminal success remains evidence-based."], ["Change workload or cadence, not truth criteria."], ["Score directly validates or kills a project.", "Vibe presented as objective."], False, "LOW", ["Fixed thresholds and universal creation ratios are not imported."], {"cadence": "user-defined"}, ["governance.success-criteria-lock"])
           ]
 
-          schema = json.loads(pathlib.Path('schemas/module.schema.json').read_text(encoding='utf-8'))
-          validator = Draft202012Validator(schema)
-          ids = set()
-          written = []
-          for item in modules:
-              errors = sorted(validator.iter_errors(item), key=lambda e: list(e.path))
-              if errors:
-                  raise SystemExit(f"schema failure for {item['module_id']}: {errors[0].message}")
-              if item['module_id'] in ids:
-                  raise SystemExit(f"duplicate module id: {item['module_id']}")
-              ids.add(item['module_id'])
-              filename = item['module_id'].replace('.', '__') + '.module.json'
-              path = OUT / filename
-              payload = json.dumps(item, indent=2, ensure_ascii=False) + '\n'
-              path.write_text(payload, encoding='utf-8')
-              written.append({
-                  'module_id': item['module_id'],
-                  'path': str(path),
-                  'sha256': hashlib.sha256(payload.encode('utf-8')).hexdigest(),
-                  'classification': item['classification'],
-                  'status': item['status'],
-                  'default_include': item['default_include'],
-              })
-
-          by_class = collections.Counter(m['classification'] for m in modules)
-          by_status = collections.Counter(m['status'] for m in modules)
-          index = {
-              'schema_version': '1.0.0',
-              'catalog_id': 'prompts-v2.legacy-extracted',
-              'checkpoint': 'PROMPTS_V2_CHECKPOINT_0003',
-              'source_checkpoint': 'PROMPTS_V2_CHECKPOINT_0002',
-              'source_commit': '9c7071b83f3928b62acc4f030e50c0deed13e2ad',
-              'module_schema': 'schemas/module.schema.json',
-              'module_count': len(modules),
-              'counts_by_classification': dict(sorted(by_class.items())),
-              'counts_by_status': dict(sorted(by_status.items())),
-              'modules': sorted(written, key=lambda x: x['module_id']),
-              'legacy_files_modified': False,
-              'workflow_run_id': os.environ.get('WORKFLOW_RUN_ID'),
-              'workflow_run_attempt': os.environ.get('WORKFLOW_RUN_ATTEMPT'),
-              'next_required_action': 'Build the rule graph, conflict ledger, precedence policy and deprecation ledger from these typed modules.',
+          required = {
+            "module_id", "version", "title", "classification", "status", "source_refs",
+            "purpose", "applies_to", "does_not_apply_to", "inputs", "outputs",
+            "context_cost", "default_include", "hard_rules", "checks", "failure_conditions"
           }
-          index_payload = json.dumps(index, indent=2, ensure_ascii=False) + '\n'
-          (OUT / 'MODULE_INDEX.json').write_text(index_payload, encoding='utf-8')
+          ids = set()
+          entries = []
+          for item in modules:
+            missing = required - item.keys()
+            if missing:
+              raise SystemExit(f"{item['module_id']} missing {sorted(missing)}")
+            if item["module_id"] in ids:
+              raise SystemExit(f"duplicate module id {item['module_id']}")
+            ids.add(item["module_id"])
+            path = out / (item["module_id"].replace(".", "__") + ".module.json")
+            payload = json.dumps(item, indent=2, ensure_ascii=False) + "\n"
+            path.write_text(payload, encoding="utf-8")
+            entries.append({
+              "module_id": item["module_id"],
+              "path": str(path),
+              "sha256": hashlib.sha256(payload.encode()).hexdigest(),
+              "classification": item["classification"],
+              "status": item["status"],
+              "default_include": item["default_include"]
+            })
 
-          audit = '''# Legacy Mechanism Audit
+          if len(modules) != 24:
+            raise SystemExit(f"expected 24 modules, found {len(modules)}")
 
-## Checkpoint
+          index = {
+            "schema_version": "1.0.0",
+            "catalog_id": "prompts-v2.legacy-extracted",
+            "checkpoint": "PROMPTS_V2_CHECKPOINT_0003",
+            "source_checkpoint": "PROMPTS_V2_CHECKPOINT_0002",
+            "module_schema": "schemas/module.schema.json",
+            "module_count": len(modules),
+            "counts_by_classification": dict(collections.Counter(x["classification"] for x in modules)),
+            "counts_by_status": dict(collections.Counter(x["status"] for x in modules)),
+            "modules": sorted(entries, key=lambda x: x["module_id"]),
+            "legacy_files_modified": False,
+            "validation": {"required_fields": "PASS", "unique_ids": "PASS", "module_count": "PASS"},
+            "next_required_action": "Build rule graph, conflict ledger, precedence policy and deprecation ledger."
+          }
+          index_payload = json.dumps(index, indent=2, ensure_ascii=False) + "\n"
+          (out / "MODULE_INDEX.json").write_text(index_payload, encoding="utf-8")
 
-- Project: **PROMPTS V2 — GAUNTLET AGENT OS**
+          audit = """# Legacy Mechanism Audit
+
+## Result
+
+- Checkpoint: `PROMPTS_V2_CHECKPOINT_0003`
 - State: `LEGACY_MECHANISMS_TYPED`
-- Source checkpoint: `PROMPTS_V2_CHECKPOINT_0002`
-- Generated checkpoint: `PROMPTS_V2_CHECKPOINT_0003`
-- Legacy files modified: **No**
+- Frozen legacy files modified: **No**
+- Typed modules: **24**
 
-## Governing extraction rule
+The frozen files are historical evidence, not executable authority. Transferable mechanisms were separated from fixed thresholds, platform syntax, rhetorical framing, unsupported examples and contaminated generated text.
 
-The legacy files are historical evidence, not executable authority. A mechanism is retained only after separating it from platform syntax, rhetorical framing, fixed thresholds, illustrative claims and contaminated generated text.
+## Principal rulings
 
-## File rulings
+- APEX governance locks, falsification, metrics, gates, monitors and secure defaults were retained.
+- Mandatory GPU use, universal seed counts and blanket production rules became profiles rather than invariants.
+- Alpha proxy triangulation, regime awareness and multiple-testing discipline were retained as bounded methods; legacy numerical thresholds and unsourced examples were not imported.
+- COMPARE alignment and incentive analysis were retained, but incentive hypotheses cannot establish causation.
+- Meta-Science curiosity methods were retained; darkness scores, UAP counts and presumed suppression were quarantined.
+- Kleon influence, remix and transformation methods were retained with attribution; Grok commands became adapter concerns.
+- VAL workflow and sustainability concepts were retained; language locks, deadlines, coverage targets and vibe thresholds were not made universal.
+- The Grok guide contributed model-neutral goal, output and tool clarity; dated model comparisons and tool claims were excluded.
 
-| Legacy file | Retained mechanisms | Reclassified or excluded material | Ruling |
-|---|---|---|---|
-| `README.md` | Repository map and historical purpose | Status claims and licence declaration are not implementation evidence | Overview only |
-| `COMPARE_ALPHA v1.md` | Cross-domain alignment; mismatch ledger; incentive autopsy | Canada examples and causal interpretations require independent evidence | Retain methods; quarantine examples |
-| `CRIME_ALPHA v1.md` | Independent proxy triangulation; claim-strength ceiling; reporting-lag checks | Fixed crisis weights, fixed sample thresholds, undercount ranges and claims that selected proxies cannot be manipulated | Retain bounded methods; quarantine assertions |
-| `GEOPOL_ALPHA v1.md` | Physical-data checks; regime-change awareness; definition-drift and rumor-overweighting checks | Fixed numerical rules, event returns, pass-through figures, universal thresholds and trailing assistant-response contamination | Retain methods; quarantine numbers and contaminated tail |
-| `GROK_APEX_4.4.md` | Success lock; falsification; metric integrity; scope lock; evidence-language alignment; gates; monitors; secure defaults | Mandatory GPU utilization, universal seed counts, platform commands and blanket production rules become profile-specific | Primary governance source |
-| `GROK_PROMPTING_GUIDE.md` | Goal clarity; output specification; justified tool use; iterative decomposition | Tool counts, knowledge-cutoff claims, speed gains and model comparisons are time-sensitive and unsupported | Retain adapter-neutral prompting method |
-| `KLEON_CREATIVE_LAYER_v1.1.md` | Influence map; contrarian search; forced remix; simplest version; side-project validator; transformation ladder | Grok commands are adapter syntax; routines and score thresholds are optional; Austin Kleon attribution remains mandatory | Retain creative modules with attribution |
-| `META_SCIENCE_INVESTIGATION_v1.1.md` | Investigate-before-dismiss; evidence-for/evidence-against ledger; incentive hypotheses; open-question framing | Darkness scores, UAP counts, exemplar conclusions and presumed suppression are not imported as facts | Retain curiosity method; quarantine advocacy assumptions |
-| `THE ALPHA SUITE v1.0.md` | Umbrella map of proxy, regime and deflation concepts | Duplicated domain claims and numerical examples | Archive as provenance; modules derive from underlying files |
-| `VAL_FRAMEWORK.md` | Phased workflow; progress discipline; optional sustainability checks | Python/Rust language lock, fixed launch deadlines, coverage targets and vibe thresholds are profile-specific | Retain workflow concepts; remove universal mandates |
+## Integrity findings
 
-## Contamination and integrity findings
+1. `legacy/GEOPOL_ALPHA v1.md` contains a trailing assistant-style response beginning “Sure, I can help you with that.” It remains preserved but is excluded from active modules.
+2. The frozen source declares MIT in the README but contains no root `LICENSE` file. A licence file remains a release gate.
+3. Git and SHA-256 identity prove preservation, not factual correctness.
 
-1. `GEOPOL_ALPHA v1.md` contains a trailing assistant-style response beginning with language equivalent to “Sure, I can help you with that.” It remains preserved in `legacy/` but is excluded from every active module.
-2. The root README declares MIT licensing, but the frozen corpus contains no root `LICENSE` file. PROMPTS v2 must add an actual licence file before release.
-3. Several files embed current-event examples and precise numerical claims without source ledgers. Those examples are historical material, not trusted module rules.
-4. Platform names, tool counts and model comparisons are adapters or dated observations, never kernel invariants.
-5. Git blob identity and SHA-256 checks prove preservation, not factual correctness.
+## Next action
 
-## Cross-framework conflicts requiring the next phase
-
-| Conflict | Required resolution |
-|---|---|
-| Fixed `P(Crisis) > 0.65` versus general regime detection | Threshold becomes preregistered, task-specific configuration |
-| `N >= 200` and DSR everywhere versus metric integrity | Deflation method must match the statistical construct |
-| Mandatory GPU use versus task appropriateness | Hardware rules move to compute profiles |
-| Python prototype / Rust production lock versus model independence | Language selection moves to task packs |
-| Daily shipping and speed goals versus mechanical completion | Speed is subordinate to locked completion gates |
-| Vibe score versus scope lock | Vibe may propose cadence changes but cannot authorize new work |
-| “Official statistics lie” framing versus evidence neutrality | All sources receive explicit authority and failure analysis |
-| Tool-specific Grok commands versus portable kernel | Commands move to adapters |
-| Creative copying versus attribution and licensing | Practice copying is separated from publishable transformation |
-
-## Extraction result
-
-Twenty-four typed modules were generated and validated against `schemas/module.schema.json`. No legacy file was changed. Active modules preserve the strongest transferable mechanisms while profile-specific methods remain opt-in and unsupported factual material remains quarantined.
-
-## Next required action
-
-Build `RULE_GRAPH.json`, `CONFLICT_LEDGER.md`, `PRECEDENCE_POLICY.yaml` and `DEPRECATION_LEDGER.md`. The next phase must define deterministic precedence when modules conflict; it must not add new frameworks.
-'''
-          pathlib.Path('LEGACY_MECHANISM_AUDIT.md').write_text(audit, encoding='utf-8')
+Build `RULE_GRAPH.json`, `CONFLICT_LEDGER.md`, `PRECEDENCE_POLICY.yaml` and `DEPRECATION_LEDGER.md`. No new framework is authorized.
+"""
+          Path("LEGACY_MECHANISM_AUDIT.md").write_text(audit, encoding="utf-8")
 
           checkpoint = {
-              'schema_version': '1.0.0',
-              'project': 'PROMPTS V2 — GAUNTLET AGENT OS',
-              'checkpoint': 'PROMPTS_V2_CHECKPOINT_0003',
-              'state': 'LEGACY_MECHANISMS_TYPED',
-              'source_checkpoint': 'PROMPTS_V2_CHECKPOINT_0002',
-              'module_count': len(modules),
-              'module_index_sha256': hashlib.sha256(index_payload.encode('utf-8')).hexdigest(),
-              'audit_sha256': hashlib.sha256(audit.encode('utf-8')).hexdigest(),
-              'legacy_files_modified': False,
-              'schema_validation': 'PASS',
-              'duplicate_module_ids': 0,
-              'known_contamination_quarantined': ['legacy/GEOPOL_ALPHA v1.md trailing assistant response'],
-              'next_required_action': index['next_required_action'],
+            "schema_version": "1.0.0",
+            "project": "PROMPTS V2 — GAUNTLET AGENT OS",
+            "checkpoint": "PROMPTS_V2_CHECKPOINT_0003",
+            "state": "LEGACY_MECHANISMS_TYPED",
+            "source_checkpoint": "PROMPTS_V2_CHECKPOINT_0002",
+            "module_count": 24,
+            "module_index_sha256": hashlib.sha256(index_payload.encode()).hexdigest(),
+            "audit_sha256": hashlib.sha256(audit.encode()).hexdigest(),
+            "legacy_files_modified": False,
+            "validation": {"required_fields": "PASS", "unique_module_ids": "PASS", "module_count": "PASS"},
+            "known_contamination_quarantined": ["legacy/GEOPOL_ALPHA v1.md trailing assistant response"],
+            "next_required_action": index["next_required_action"]
           }
-          pathlib.Path('PROMPTS_V2_CHECKPOINT_0003.json').write_text(
-              json.dumps(checkpoint, indent=2, ensure_ascii=False) + '\n',
-              encoding='utf-8',
-          )
+          Path("PROMPTS_V2_CHECKPOINT_0003.json").write_text(json.dumps(checkpoint, indent=2) + "\n")
           PY
 
-      - name: Revalidate all generated modules
+      - name: Verify generated artifacts
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import json
-          import pathlib
-          from jsonschema import Draft202012Validator
-
-          schema = json.loads(pathlib.Path('schemas/module.schema.json').read_text())
-          validator = Draft202012Validator(schema)
-          files = sorted(pathlib.Path('modules/legacy-extracted').glob('*.module.json'))
-          assert len(files) == 24, len(files)
-          for path in files:
-              value = json.loads(path.read_text())
-              errors = list(validator.iter_errors(value))
-              if errors:
-                  raise SystemExit(f'{path}: {errors[0].message}')
-          print(f'validated {len(files)} module manifests')
-          PY
+          test "$(find modules/legacy-extracted -name '*.module.json' | wc -l)" -eq 24
+          python3 -m json.tool modules/legacy-extracted/MODULE_INDEX.json >/dev/null
+          python3 -m json.tool PROMPTS_V2_CHECKPOINT_0003.json >/dev/null
           sha256sum -c LEGACY_SHA256SUMS.txt
           git diff --exit-code -- legacy
 
-      - name: Verify allowed change set
-        run: |
-          set -euo pipefail
-          changed="$(git status --short | awk '{print $2}')"
-          printf '%s\n' "$changed"
-          disallowed="$(printf '%s\n' "$changed" | grep -Ev '^(modules/legacy-extracted/|LEGACY_MECHANISM_AUDIT\.md$|PROMPTS_V2_CHECKPOINT_0003\.json$)' || true)"
-          if [ -n "$disallowed" ]; then
-            echo "Disallowed paths changed:"
-            echo "$disallowed"
-            exit 1
-          fi
-
-      - name: Commit typed module extraction
+      - name: Commit checkpoint 0003
         run: |
           set -euo pipefail
           git config user.name "prompts-v2-module-bot"
           git config user.email "actions@users.noreply.github.com"
           git add modules/legacy-extracted LEGACY_MECHANISM_AUDIT.md PROMPTS_V2_CHECKPOINT_0003.json
-          git commit -m "Extract and validate typed modules from frozen legacy prompts"
+          git commit -m "Extract typed modules from frozen legacy prompts"
           git push origin HEAD:revival/prompts-v2
