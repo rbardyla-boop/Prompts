@@ -1,0 +1,18 @@
+{
+  "taskpack_id": "factual-audit",
+  "version": "1.0.0",
+  "task_type": "research",
+  "module_ids": ["evidence.proxy-triangulation", "evidence.cross-domain-alignment", "research.competing-view-search"],
+  "deliverables": ["claim ledger", "source map", "audit verdict"],
+  "constraints": ["No unsupported factual claims.", "Contradictions must be disclosed."],
+  "completion_checks": [
+    {"id": "claim-support", "description": "Every emitted claim maps to evidence", "required": true},
+    {"id": "citation-integrity", "description": "Zero fabricated or mismatched citations", "required": true},
+    {"id": "contradictions", "description": "Contradictions are disclosed or refused", "required": true},
+    {"id": "independent-evaluation", "description": "Independent evaluator passes", "required": true}
+  ],
+  "allowed_actions": ["read_repository", "search_public_sources", "write_worktree", "run_deterministic_checks"],
+  "forbidden_actions": ["access_secrets", "production_deploy", "destructive_write"],
+  "default_budgets": {"max_steps": 80, "max_runtime_minutes": 300, "max_replans": 2},
+  "terminal_states": ["PASS", "PASS_WITH_DISCLOSED_LIMITS", "SEALED_NEGATIVE_RESULT", "BLOCKED_EXTERNAL"]
+}
