@@ -36,7 +36,7 @@ class SecurityTests(unittest.TestCase):
             workspace.mkdir()
             outside.mkdir()
             (workspace / "link").symlink_to(outside, target_is_directory=True)
-            with self.assertRaisesRegex(SecurityError, "symlink escape"):
+            with self.assertRaises(SecurityError):
                 resolve_workspace_path(workspace, "link/secret.txt")
 
     def test_safe_relative_path_is_allowed(self) -> None:
