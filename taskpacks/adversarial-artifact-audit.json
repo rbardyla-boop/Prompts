@@ -2,6 +2,7 @@
   "taskpack_id": "adversarial-artifact-audit",
   "version": "1.0.0",
   "task_type": "benchmarking",
+  "extra_task_tags": ["research", "architecture"],
   "module_ids": ["evidence.falsification-check", "evidence.metric-integrity", "research.competing-view-search"],
   "deliverables": ["attack ledger", "reproduction cases", "verdict"],
   "constraints": ["Preserve failed artifacts.", "Do not repair before reproducing the defect."],
