@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0",
+  "project": "PROMPTS V2 — GAUNTLET AGENT OS",
+  "source_repository": "rbardyla-boop/Prompts",
+  "source_branch": "main",
+  "source_commit": "9c7071b83f3928b62acc4f030e50c0deed13e2ad",
+  "source_commit_date": "2026-03-16T11:26:41Z",
+  "frozen_on": "2026-08-03",
+  "archive_branch": "archive/prompts-v1-pre-revival-2026-08-03",
+  "revival_branch": "revival/prompts-v2",
+  "integrity": {
+    "algorithm": "git-blob-sha1",
+    "description": "Each value is GitHub's immutable Git blob object ID for the exact file content at source_commit.",
+    "raw_sha256_manifest_required_before_legacy_relocation": true
+  },
+  "scope_lock": "No new framework, prompt collection, agent product, or unrelated project may be started until this repository reaches PROMPTS_V2_VALIDATED, PASS_WITH_DISCLOSED_LIMITS, SEALED_NEGATIVE_RESULT, or BLOCKED_EXTERNAL.",
+  "legacy_files": [
+    {
+      "path": "README.md",
+      "git_blob_sha1": "4e7fb6030b30f2694c01b05df0dfbcf3c0949a3c",
+      "classification": "repository-overview"
+    },
+    {
+      "path": "COMPARE_ALPHA v1.md",
+      "git_blob_sha1": "7e16563a06373be2a81137d77a2fa8fe6baff236",
+      "classification": "legacy-framework"
+    },
+    {
+      "path": "CRIME_ALPHA v1.md",
+      "git_blob_sha1": "1afe5daaeee7e7893213371d4a2947a02e6fd002",
+      "classification": "legacy-framework"
+    },
+    {
+      "path": "GEOPOL_ALPHA v1.md",
+      "git_blob_sha1": "df9fb1ddaf997ca84c2b0849ec1e2253ee00b867",
+      "classification": "legacy-framework"
+    },
+    {
+      "path": "GROK_APEX_4.4.md",
+      "git_blob_sha1": "cf4fcbd40407e27dcbd27b40afd05c86ccdd9239",
+      "classification": "legacy-framework"
+    },
+    {
+      "path": "GROK_PROMPTING_GUIDE.md",
+      "git_blob_sha1": "704ed466f20bc4624d98e9dc1d5c81ccc53c3118",
+      "classification": "legacy-guide"
+    },
+    {
+      "path": "KLEON_CREATIVE_LAYER_v1.1.md",
+      "git_blob_sha1": "87fd29b0138048224e03a8ffed21eefa111995c2",
+      "classification": "legacy-framework"
+    },
+    {
+      "path": "META_SCIENCE_INVESTIGATION_v1.1.md",
+      "git_blob_sha1": "2f2908600ef915b2f2f8130a3f069f74524baee2",
+      "classification": "legacy-framework"
+    },
+    {
+      "path": "THE ALPHA SUITE v1.0.md",
+      "git_blob_sha1": "10eca12e893538f26d4356712d3e008725861b1a",
+      "classification": "legacy-umbrella-framework"
+    },
+    {
+      "path": "VAL_FRAMEWORK.md",
+      "git_blob_sha1": "18e72758c538ee664087c6755eb04efb47d2061d",
+      "classification": "legacy-framework"
+    }
+  ],
+  "file_count": 10,
+  "original_files_modified": false,
+  "next_required_action": "Generate raw SHA-256 hashes from a clean checkout of source_commit, then copy the byte-identical legacy files into legacy/ before extracting modules."
+}
