@@ -1,0 +1,70 @@
+name: PROMPTS v2 live comparison benchmark
+
+on:
+  push:
+    branches:
+      - revival/prompts-v2
+    paths:
+      - .github/workflows/benchmark-live.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  models: read
+
+jobs:
+  research-contradiction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PROMPTS v2
+        run: python -m pip install --disable-pip-version-check -e .
+
+      - name: Run preregistered 5xA/B/C matched comparison
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          seed=$((16#${GITHUB_SHA:0:8}))
+          rm -rf /tmp/prompts-v2-live-benchmark
+          promptbench-live \
+            --root . \
+            --fixture research-contradiction-001 \
+            --output /tmp/prompts-v2-live-benchmark \
+            --generator-model openai/gpt-4.1 \
+            --evaluator-model openai/gpt-4o \
+            --repetitions 5 \
+            --randomization-seed "$seed" \
+            --generation-max-tokens 1600 \
+            --evaluator-max-tokens 700 \
+            --temperature 0.3 \
+            --timeout-seconds 120 \
+            --retries 2
+
+      - name: Verify raw evidence count and report boundary
+        run: |
+          test "$(find /tmp/prompts-v2-live-benchmark/raw-generations -type f -name '*.json' | wc -l)" -eq 15
+          test "$(find /tmp/prompts-v2-live-benchmark/blinded-evaluations -type f -name '*.json' | wc -l)" -eq 15
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          report = json.loads(Path('/tmp/prompts-v2-live-benchmark/comparison-report.json').read_text(encoding='utf-8'))
+          assert report['public_development_evidence_only'] is True
+          assert report['repetitions_per_arm'] == 5
+          assert report['summary']['final_validation_eligible'] is False
+          assert set(report['summary']['arms']) == {'A', 'B', 'C'}
+          print(json.dumps(report['summary'], indent=2))
+          PY
+
+      - name: Upload frozen live benchmark evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompts-v2-live-research-contradiction
+          path: /tmp/prompts-v2-live-benchmark
+          if-no-files-found: error
+          retention-days: 30
