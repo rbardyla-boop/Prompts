@@ -10,9 +10,16 @@ on:
       - tests/**
       - taskpacks/**
       - schemas/**
+      - benchmarks/**
+      - adapters/**
       - modules/legacy-extracted/MODULE_CATALOG.json
       - RULE_GRAPH.json
       - PRECEDENCE_POLICY.yaml
+      - SECURITY.md
+      - ORIGINS_AND_ATTRIBUTION.md
+      - LICENSE
+      - README.md
+      - PROMPTS_V2_CHECKPOINT_*.json
       - pyproject.toml
       - .github/workflows/kernel-tests.yml
   pull_request:
@@ -21,10 +28,18 @@ on:
       - tests/**
       - taskpacks/**
       - schemas/**
+      - benchmarks/**
+      - adapters/**
       - modules/legacy-extracted/MODULE_CATALOG.json
       - RULE_GRAPH.json
       - PRECEDENCE_POLICY.yaml
+      - SECURITY.md
+      - ORIGINS_AND_ATTRIBUTION.md
+      - LICENSE
+      - README.md
+      - PROMPTS_V2_CHECKPOINT_*.json
       - pyproject.toml
+      - .github/workflows/kernel-tests.yml
 
 permissions:
   contents: read
@@ -45,7 +60,10 @@ jobs:
         run: python -m promptctl --root . validate
 
       - name: Run all adversarial unit tests
-        run: python -m unittest discover -s tests -v
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -v 2>&1 | tee /tmp/prompts-v2-unit-tests.log
 
       - name: Execute false-completion terminal harness
         run: python -m promptctl --root . self-test
@@ -72,6 +90,114 @@ jobs:
             echo "Quarantined legacy content entered composed prompt"
             exit 1
           fi
+
+      - name: Prepare and verify all matched benchmark packages
+        env:
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          import shutil
+          import subprocess
+          from pathlib import Path
+
+          from promptctl.benchmark import prepare_arm
+
+          root = Path.cwd().resolve()
+          evidence_root = Path('/tmp/prompts-v2-candidate-evidence')
+          if evidence_root.exists():
+              shutil.rmtree(evidence_root)
+          evidence_root.mkdir(parents=True)
+
+          spec = json.loads((root / 'benchmarks/benchmark-spec.json').read_text(encoding='utf-8'))
+          package_receipts = []
+          for task in spec['task_families']:
+              fixture_id = task['fixture_id']
+              manifests = {}
+              for arm in ('A', 'B', 'C'):
+                  output = evidence_root / 'packages' / fixture_id / arm
+                  manifests[arm] = prepare_arm(root, fixture_id, arm, output, 200_000)
+
+              fixture_hashes = {manifests[arm]['fixture_sha256'] for arm in manifests}
+              evaluator_hashes = {manifests[arm]['evaluator_package_sha256'] for arm in manifests}
+              prompt_hashes = {manifests[arm]['prompt_sha256'] for arm in manifests}
+              if len(fixture_hashes) != 1:
+                  raise SystemExit(f'{fixture_id}: fixture hash mismatch across arms')
+              if len(evaluator_hashes) != 1:
+                  raise SystemExit(f'{fixture_id}: evaluator hash mismatch across arms')
+              if len(prompt_hashes) != 3:
+                  raise SystemExit(f'{fixture_id}: arm prompts are not distinct')
+
+              package_receipts.append({
+                  'fixture_id': fixture_id,
+                  'family': task['family'],
+                  'fixture_sha256': next(iter(fixture_hashes)),
+                  'evaluator_package_sha256': next(iter(evaluator_hashes)),
+                  'arms': {
+                      arm: {
+                          'prompt_sha256': manifests[arm]['prompt_sha256'],
+                          'prompt_chars': manifests[arm]['prompt_chars'],
+                          'selected_modules': manifests[arm]['selected_modules'],
+                      }
+                      for arm in ('A', 'B', 'C')
+                  },
+              })
+
+          test_log = Path('/tmp/prompts-v2-unit-tests.log').read_text(encoding='utf-8')
+          match = re.search(r'Ran (\d+) tests', test_log)
+          if not match:
+              raise SystemExit('Could not recover test count from unit-test log')
+
+          checkout_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          git_status = subprocess.check_output(['git', 'status', '--porcelain=v1'], text=True)
+          if git_status.strip():
+              raise SystemExit('Candidate checkout became dirty during validation')
+
+          receipt = {
+              'schema_version': '1.0.0',
+              'project': 'PROMPTS V2 — GAUNTLET AGENT OS',
+              'receipt_type': 'clean-checkout-candidate-and-benchmark-package-receipt',
+              'tested_checkout_sha': checkout_sha,
+              'pr_head_sha': os.environ.get('PR_HEAD_SHA') or None,
+              'github_run_id': os.environ.get('GITHUB_RUN_ID'),
+              'github_run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'runner_os': os.environ.get('RUNNER_OS'),
+              'unit_tests_run': int(match.group(1)),
+              'unit_tests_result': 'PASS',
+              'kernel_validation': 'PASS',
+              'terminal_harness': 'PASS',
+              'deterministic_selection': 'PASS',
+              'quarantined_tail_exclusion': 'PASS',
+              'clean_worktree_after_validation': True,
+              'benchmark_package_count': len(package_receipts) * 3,
+              'benchmark_fixtures': package_receipts,
+              'matched_package_invariants': {
+                  'same_fixture_hash_across_arms': True,
+                  'same_evaluator_hash_across_arms': True,
+                  'distinct_prompt_hash_per_arm': True,
+                  'context_ceiling_chars': 200000,
+              },
+              'live_model_execution': 'NOT_PART_OF_THIS_CI_GATE',
+              'independent_blinded_evaluation': 'NOT_PART_OF_THIS_CI_GATE',
+              'terminal_status': 'IN_PROGRESS',
+              'next_required_action': 'Run the frozen packages under matched model/tool budgets, preserve raw outputs, then perform blinded evaluation. Five paired repetitions per fixture per arm are required by the benchmark spec.',
+          }
+          receipt_bytes = (json.dumps(receipt, indent=2, sort_keys=True, ensure_ascii=False) + '\n').encode('utf-8')
+          (evidence_root / 'candidate-receipt.json').write_bytes(receipt_bytes)
+          (evidence_root / 'candidate-receipt.sha256').write_text(hashlib.sha256(receipt_bytes).hexdigest() + '  candidate-receipt.json\n', encoding='utf-8')
+          print(json.dumps(receipt, indent=2, ensure_ascii=False))
+          PY
+
+      - name: Upload exact candidate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompts-v2-candidate-evidence
+          path: /tmp/prompts-v2-candidate-evidence
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Verify package compiles
         run: python -m compileall -q promptctl tests
