@@ -1,0 +1,63 @@
+{
+  "schema_version": "1.0.0",
+  "project": "PROMPTS V2 — GAUNTLET AGENT OS",
+  "checkpoint": "PROMPTS_V2_CHECKPOINT_0006",
+  "state": "INTERNAL_CANDIDATE_VALIDATED_LIVE_COMPARISON_BLOCKED_EXTERNAL",
+  "source_checkpoint": "PROMPTS_V2_CHECKPOINT_0005",
+  "repository_validation": {
+    "validated_pr_head": "07f0ab49956e9b0ae3b3e90b901ef4c723159085",
+    "tested_merge_checkout": "1117ff8178f204bc6636cfe40b3056010da15cbd",
+    "github_actions_run_id": 31226101179,
+    "result": "PASS",
+    "tests_run": 49,
+    "failures": 0,
+    "errors": 0,
+    "kernel_validation": "PASS",
+    "terminal_harness": "PASS",
+    "deterministic_selection": "PASS",
+    "quarantined_tail_exclusion": "PASS",
+    "benchmark_package_count": 15,
+    "tracked_worktree_clean_after_cleanup": true,
+    "candidate_evidence_artifact_id": 9012138157
+  },
+  "matched_package_invariants": {
+    "five_public_fixtures_present": true,
+    "arms_per_fixture": ["A", "B", "C"],
+    "same_fixture_hash_across_arms": true,
+    "same_evaluator_hash_across_arms": true,
+    "distinct_prompt_hash_per_arm": true,
+    "context_ceiling_chars": 200000
+  },
+  "live_execution": {
+    "result": "BLOCKED_EXTERNAL",
+    "receipt": "benchmarks/LIVE_EXECUTION_BLOCKED_2026-08-07.json",
+    "github_actions_run_id": 31226101171,
+    "job_id": 93020602790,
+    "execution_surface": "github-copilot-cli",
+    "auto_routing_reached": true,
+    "auto_selected_model": "gpt-5-mini",
+    "available_models_reported": [
+      "claude-haiku-4.5",
+      "gpt-5-mini"
+    ],
+    "provider_status_code": 402,
+    "provider_error_code": "quota_exceeded",
+    "reported_reset_at": "2026-09-01T00:00:00Z",
+    "accepted_generations": 0,
+    "accepted_blinded_evaluations": 0,
+    "quality_verdict_produced": false
+  },
+  "strongest_supported_claim": "PROMPTS v2 now has a clean-checkout validated kernel, reliability harness, deterministic task-pack composer, security regressions, reproducible matched A/B/C benchmark packages and a live benchmark adapter proven through Copilot Auto routing to the provider boundary. The live model-quality comparison has not run because the authorized Copilot execution surface returned quota_exceeded before accepting a generation.",
+  "claims_not_supported": [
+    "PROMPTS v2 produces better artifacts than the strongest legacy prompt.",
+    "PROMPTS v2 is worse than the strongest legacy prompt.",
+    "The live comparison gate passed.",
+    "The public development fixtures are independent final evidence.",
+    "PROMPTS_V2_VALIDATED terminal status has been reached."
+  ],
+  "project_terminal_status": "IN_PROGRESS",
+  "blocked_gate": "live matched A/B/C model execution and blinded evaluation",
+  "blocked_gate_status": "BLOCKED_EXTERNAL",
+  "resume_condition": "Run the frozen benchmark packages on an authorized inference surface with available quota while preserving matched model, tools, context, repetition, blinding and decision-rule controls.",
+  "next_required_action": "Do not modify the benchmark task or rubric to bypass the block. Resume the 5 x A/B/C research-contradiction-001 run when an authorized inference surface has quota, then evaluate the result before expanding to the remaining fixtures."
+}
