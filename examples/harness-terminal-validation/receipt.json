@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "example_id": "harness-terminal-validation-ci-001",
+  "project": "PROMPTS V2 — GAUNTLET AGENT OS",
+  "validated_commit": "dbb997de33c4ceee7d4a1742c9a7a52257e651e8",
+  "github_actions_run_id": 30814084912,
+  "runner": "Ubuntu 24.04",
+  "python": "3.11.15",
+  "test_suite": {
+    "tests": 36,
+    "failures": 0,
+    "errors": 0,
+    "result": "PASS"
+  },
+  "terminal_harness": {
+    "task_id": "harness-terminal-test-d8e6e1374684",
+    "false_completion_rejected": true,
+    "failed_requirement_persisted": true,
+    "recovery_passed": true,
+    "material_amendment_auto_approval_rejected": true,
+    "repaired_completion_accepted": true,
+    "trace_integrity": {
+      "event_count": 10,
+      "trace_root_hash": "7dfb1c068436efc60665c09bb6667e4ce50b99c07690f90c8d5d1398a4a4f833",
+      "result": "PASS"
+    }
+  },
+  "negative_control": {
+    "previous_run_id": 30813948173,
+    "result": "FAIL",
+    "cause": "The symlink escape was correctly rejected, but the test asserted a narrower error message.",
+    "repair": "Assert the enforced boundary rather than one internal diagnostic string.",
+    "regression_after_repair": "PASS"
+  },
+  "strongest_supported_claim": "The current harness rejects a required-check failure despite a completion claim, persists the failed requirement, recovers from external state in a fresh process, blocks an unapproved material amendment, accepts the repaired task and verifies its trace chain.",
+  "not_proven": [
+    "hardened host isolation",
+    "production secret handling",
+    "superiority on live model artifact quality",
+    "PROMPTS_V2_VALIDATED"
+  ]
+}

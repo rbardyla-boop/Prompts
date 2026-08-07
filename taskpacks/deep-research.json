@@ -1,0 +1,25 @@
+{
+  "taskpack_id": "deep-research",
+  "version": "1.0.0",
+  "task_type": "research",
+  "module_ids": [
+    "research.competing-view-search",
+    "research.curiosity-lens",
+    "evidence.proxy-triangulation"
+  ],
+  "deliverables": ["research report", "evidence ledger", "limitations"],
+  "constraints": [
+    "Distinguish observed evidence from inference.",
+    "Use current primary sources where available."
+  ],
+  "completion_checks": [
+    {"id": "sources-verified", "description": "Load-bearing claims have verified sources", "required": true},
+    {"id": "counterevidence-reviewed", "description": "Material counterevidence was considered", "required": true},
+    {"id": "claims-calibrated", "description": "Claim language matches evidence", "required": true},
+    {"id": "independent-evaluation", "description": "Independent evaluator passes the report", "required": true}
+  ],
+  "allowed_actions": ["read_repository", "search_public_sources", "write_worktree", "run_deterministic_checks"],
+  "forbidden_actions": ["access_secrets", "production_deploy", "destructive_write", "arbitrary_shell"],
+  "default_budgets": {"max_steps": 80, "max_runtime_minutes": 240, "max_replans": 2},
+  "terminal_states": ["PASS", "PASS_WITH_DISCLOSED_LIMITS", "SEALED_NEGATIVE_RESULT", "BLOCKED_EXTERNAL"]
+}

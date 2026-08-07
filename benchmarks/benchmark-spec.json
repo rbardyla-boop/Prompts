@@ -1,0 +1,95 @@
+{
+  "schema_version": "1.0.0",
+  "benchmark_id": "prompts-v2-comparison-v0",
+  "status": "PUBLIC_APPARATUS_NOT_FINAL_SEALED_EVIDENCE",
+  "purpose": "Compare a plain task instruction, the strongest relevant legacy prompt and PROMPTS v2 under matched resources.",
+  "arms": {
+    "A": {
+      "name": "plain-instruction",
+      "description": "The model receives only the task objective, source material, output format and shared resource limits."
+    },
+    "B": {
+      "name": "best-legacy-framework",
+      "description": "The model receives the task plus one preregistered strongest relevant frozen legacy prompt."
+    },
+    "C": {
+      "name": "prompts-v2",
+      "description": "The model receives the task contract and deterministically selected PROMPTS v2 modules, with the reliability harness active."
+    }
+  },
+  "matched_controls": [
+    "same model and quantization",
+    "same source access",
+    "same task order",
+    "same context ceiling where feasible",
+    "same output-token ceiling",
+    "same wall-time budget",
+    "same retry limit",
+    "same tools and permissions",
+    "same evaluator rubric",
+    "same deterministic completion checks"
+  ],
+  "arm_specific_allowances": {
+    "A": "No framework-specific state or critic instructions.",
+    "B": "Only the preregistered legacy framework may add instructions.",
+    "C": "The composer, builder-critic loop and reliability harness may operate, but may not receive more model or tool budget."
+  },
+  "task_families": [
+    {
+      "fixture_id": "research-contradiction-001",
+      "family": "research",
+      "path": "benchmarks/fixtures/research-contradiction-001/fixture.json"
+    },
+    {
+      "fixture_id": "coding-five-requirements-001",
+      "family": "coding",
+      "path": "benchmarks/fixtures/coding-five-requirements-001/fixture.json"
+    },
+    {
+      "fixture_id": "writing-continuity-001",
+      "family": "long-form-writing",
+      "path": "benchmarks/fixtures/writing-continuity-001/fixture.json"
+    },
+    {
+      "fixture_id": "browser-game-loop-001",
+      "family": "game-creative",
+      "path": "benchmarks/fixtures/browser-game-loop-001/fixture.json"
+    },
+    {
+      "fixture_id": "factual-supersession-001",
+      "family": "factual-audit",
+      "path": "benchmarks/fixtures/factual-supersession-001/fixture.json"
+    }
+  ],
+  "primary_metrics": [
+    "required-check pass rate",
+    "independent evaluator pass rate",
+    "unsupported factual claim count",
+    "false-completion count",
+    "recovery success after forced context loss",
+    "critic identification of the first major defect",
+    "regression preservation",
+    "wall time",
+    "input and output token use"
+  ],
+  "decision_rule": {
+    "minimum_runs_per_fixture_per_arm": 5,
+    "paired_randomization": true,
+    "blind_arm_labels": true,
+    "primary_comparison": "C versus B",
+    "secondary_comparison": "C versus A",
+    "quality_gate": "C must improve contract satisfaction or artifact quality without obtaining the result mainly through greater refusal, larger model budget or extra tools.",
+    "statistical_report": "Report paired differences and confidence intervals; do not promote a win when the interval includes no meaningful benefit."
+  },
+  "invalidating_failures": [
+    "different model or quantization across arms",
+    "benchmark answers in prompt metadata",
+    "evaluator sees arm identity",
+    "manual repair after seeing final results",
+    "missing raw outputs",
+    "weaker baseline substituted post hoc",
+    "C receives extra source or tool access",
+    "refusals counted as correct on answerable tasks"
+  ],
+  "final_evidence_rule": "This public apparatus may validate execution and expose defects. PROMPTS_V2_VALIDATED still requires independently held tasks not used for development."
+}

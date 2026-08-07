@@ -1,0 +1,19 @@
+{
+  "taskpack_id": "book-production",
+  "version": "1.0.0",
+  "task_type": "writing",
+  "extra_task_tags": ["creative work", "creative-production", "framework development"],
+  "module_ids": ["creative.influence-map", "creative.transform-with-attribution"],
+  "deliverables": ["complete manuscript", "editorial reports", "publication package"],
+  "constraints": ["Preserve author voice.", "Do not invent endorsements, sources or biographical claims."],
+  "completion_checks": [
+    {"id": "manuscript-complete", "description": "No placeholders or missing chapters", "required": true},
+    {"id": "continuity", "description": "Continuity and repetition checks pass", "required": true},
+    {"id": "anti-slop", "description": "AI-slop audit is resolved", "required": true},
+    {"id": "publication-validation", "description": "Publication files validate", "required": true}
+  ],
+  "allowed_actions": ["read_repository", "write_worktree", "render_documents", "run_deterministic_checks"],
+  "forbidden_actions": ["publish_without_author", "invent_source", "invent_endorsement", "destructive_write"],
+  "default_budgets": {"max_steps": 150, "max_runtime_minutes": 720, "max_replans": 3},
+  "terminal_states": ["PASS", "PASS_WITH_DISCLOSED_LIMITS", "SEALED_NEGATIVE_RESULT", "BLOCKED_EXTERNAL"]
+}

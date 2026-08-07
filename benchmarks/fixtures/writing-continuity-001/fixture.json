@@ -1,0 +1,54 @@
+{
+  "fixture_id": "writing-continuity-001",
+  "version": "1.0.0",
+  "family": "long-form-writing",
+  "objective": "Revise the supplied chapter into finished prose while preserving canon, removing repeated AI-like rhetoric and retaining the author’s restrained voice.",
+  "source_bundle": [
+    {
+      "source_id": "canon",
+      "authority": "canonical",
+      "content": "Mara lost hearing in her left ear in Chapter 6. She does not know Eli copied the archive. The brass key was last placed inside the blue ledger. The scene occurs in October 2042, three days after the hearing."
+    },
+    {
+      "source_id": "draft",
+      "authority": "working",
+      "content": "It was not the silence that frightened Mara. It was what the silence meant. The corridor hummed with the kind of fluorescent light that seemed to remember every secret. Her heart pounded. For the first time, everything had changed. Eli entered and told her he had copied the archive because the reader needed to know. Mara heard him clearly from the left side. She reached into her coat and withdrew the brass key. It was not a key. It was a promise. Not because it opened a door, but because it closed one. The silence was heavy. The silence was a verdict. The silence was the future."
+    },
+    {
+      "source_id": "style-profile",
+      "authority": "authoritative",
+      "content": "Use concrete procedural detail, restrained emotion, character-specific dialogue and short consequences. Do not explain a theme after the action demonstrates it. Avoid generic sensory language, symmetrical rhetoric and quotation-ready aphorisms."
+    }
+  ],
+  "deliverables": [
+    "A revised chapter passage of 350–600 words.",
+    "A concise continuity and anti-slop change log."
+  ],
+  "constraints": [
+    "Mara cannot hear clearly from her left side.",
+    "Mara cannot know Eli copied the archive in this scene.",
+    "The key remains inside the blue ledger unless the scene causally retrieves it.",
+    "Do not add a new villain, revelation or setting."
+  ],
+  "completion_checks": [
+    {"id": "hearing-continuity", "type": "deterministic", "description": "The revision respects Mara’s left-ear hearing loss.", "required": true},
+    {"id": "knowledge-continuity", "type": "deterministic", "description": "The revision does not reveal the archive copy to Mara.", "required": true},
+    {"id": "key-continuity", "type": "deterministic", "description": "The key is not produced from her coat without retrieval from the ledger.", "required": true},
+    {"id": "anti-slop", "type": "independent-evaluator", "description": "Repeated contrast formulas, synthetic profundity and generic sensory prose are materially reduced.", "required": true},
+    {"id": "voice", "type": "human-test", "description": "A blind reader judges the revision more restrained and specific than the draft.", "required": true}
+  ],
+  "legacy_arm_source": "legacy/KLEON_CREATIVE_LAYER_v1.1.md",
+  "v2_task_pack": "book-production",
+  "evaluator_rubric": [
+    "Canon is preserved without exposition dumps.",
+    "Characters do not speak to explain information they would conceal.",
+    "Concrete action carries the emotional meaning.",
+    "The revision does not merely swap synonyms around the same generated structure."
+  ],
+  "forbidden_shortcuts": [
+    "Deleting the scene instead of revising it.",
+    "Changing canon to fit the draft.",
+    "Adding more aphorisms while removing only repeated words.",
+    "Using an AI-detector score as the pass criterion."
+  ]
+}

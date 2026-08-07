@@ -1,0 +1,50 @@
+{
+  "schema_version": "1.0.0",
+  "project": "PROMPTS V2 — GAUNTLET AGENT OS",
+  "checkpoint": "PROMPTS_V2_CHECKPOINT_0003",
+  "state": "LEGACY_MECHANISMS_TYPED",
+  "source_checkpoint": "PROMPTS_V2_CHECKPOINT_0002",
+  "source_branch": "revival/prompts-v2",
+  "source_commit": "9c7071b83f3928b62acc4f030e50c0deed13e2ad",
+  "module_catalog": {
+    "path": "modules/legacy-extracted/MODULE_CATALOG.json",
+    "git_blob_sha1": "591d27034bb554df1a91ed227d0a313a18c78fe4",
+    "module_count": 24,
+    "packaging": "catalog-of-manifests"
+  },
+  "audit": {
+    "path": "LEGACY_MECHANISM_AUDIT.md",
+    "git_blob_sha1": "4ccc18b3e497df436a3e02389b763b3f342db948"
+  },
+  "legacy_files_modified": false,
+  "validation": {
+    "module_count": "PASS",
+    "unique_module_ids": "PASS",
+    "required_manifest_fields": "PASS",
+    "source_sha256_format": "PASS",
+    "catalog_json_parse": "PASS",
+    "full_json_schema_ci_regression": "PENDING",
+    "file_per_module_compilation": "PENDING_PACKAGING"
+  },
+  "rejected_or_failed_attempts": [
+    {
+      "artifact": ".github/workflows/module-extraction.yml",
+      "commits": [
+        "d32dc4f01238864be2b65dc463e31e62412bb29c",
+        "e8b01d54a8e28232aff652a8d382b1d06dd59ec7"
+      ],
+      "result": "No verified output commit was produced; not counted as completion evidence."
+    }
+  ],
+  "known_contamination_quarantined": [
+    "legacy/GEOPOL_ALPHA v1.md trailing assistant-style response"
+  ],
+  "release_gates_still_open": [
+    "Full JSON Schema regression",
+    "Deterministic file-per-module compiler",
+    "Rule graph and precedence validation",
+    "Agent Reliability Harness terminal validation",
+    "Clean-checkout comparison benchmark"
+  ],
+  "next_required_action": "Build RULE_GRAPH.json, CONFLICT_LEDGER.md, PRECEDENCE_POLICY.yaml and DEPRECATION_LEDGER.md."
+}

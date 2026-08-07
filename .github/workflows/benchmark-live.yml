@@ -1,0 +1,137 @@
+name: PROMPTS v2 live comparison benchmark
+
+on:
+  pull_request:
+    paths:
+      - promptctl/live_benchmark.py
+      - tests/test_live_benchmark.py
+      - benchmarks/**
+      - taskpacks/**
+      - modules/legacy-extracted/MODULE_CATALOG.json
+      - RULE_GRAPH.json
+      - PRECEDENCE_POLICY.yaml
+      - .github/workflows/benchmark-live.yml
+  workflow_dispatch:
+
+concurrency:
+  group: prompts-v2-live-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+jobs:
+  research-contradiction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Install PROMPTS v2 and Copilot CLI
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          npm install --global @github/copilot
+          copilot --version
+
+      - name: Run preregistered 5xA/B/C matched comparison
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          seed=$((16#${GITHUB_SHA:0:8}))
+          rm -rf /tmp/prompts-v2-live-benchmark
+          promptbench-live \
+            --root . \
+            --fixture research-contradiction-001 \
+            --output /tmp/prompts-v2-live-benchmark \
+            --generator-model auto \
+            --evaluator-model auto \
+            --repetitions 5 \
+            --randomization-seed "$seed" \
+            --generation-max-ai-credits 30 \
+            --evaluator-max-ai-credits 30 \
+            --timeout-seconds 180 \
+            --retries 1
+
+      - name: Verify matched resolved model and evidence boundary
+        run: |
+          test "$(find /tmp/prompts-v2-live-benchmark/raw-generations -type f -name '*.json' | wc -l)" -eq 15
+          test "$(find /tmp/prompts-v2-live-benchmark/blinded-evaluations -type f -name '*.json' | wc -l)" -eq 15
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('/tmp/prompts-v2-live-benchmark')
+          report_path = root / 'comparison-report.json'
+          report = json.loads(report_path.read_text(encoding='utf-8'))
+          assert report['public_development_evidence_only'] is True
+          assert report['execution_adapter'] == 'github-copilot-cli'
+          assert report['repetitions_per_arm'] == 5
+          assert report['summary']['final_validation_eligible'] is False
+          assert set(report['summary']['arms']) == {'A', 'B', 'C'}
+          assert all(row['prompt_tokens'] > 0 for row in report['rows'])
+          assert all(row['completion_tokens'] > 0 for row in report['rows'])
+
+          def usage_models(path):
+              record = json.loads(path.read_text(encoding='utf-8'))
+              models = []
+              for event in record.get('events', []):
+                  if event.get('type') != 'assistant.usage':
+                      continue
+                  data = event.get('data') or {}
+                  model = data.get('model')
+                  if not isinstance(model, str) or not model:
+                      raise AssertionError(f'missing model in assistant.usage: {path}')
+                  models.append(model)
+              if not models:
+                  raise AssertionError(f'no assistant.usage model: {path}')
+              if len(set(models)) != 1:
+                  raise AssertionError(f'model drift inside call {path}: {models}')
+              return models[0]
+
+          generation_models = {
+              usage_models(path)
+              for path in sorted((root / 'raw-generations').glob('*.json'))
+          }
+          evaluator_models = {
+              usage_models(path)
+              for path in sorted((root / 'blinded-evaluations').glob('*.json'))
+          }
+          if len(generation_models) != 1:
+              raise AssertionError(f'generation model drift across A/B/C: {sorted(generation_models)}')
+          if len(evaluator_models) != 1:
+              raise AssertionError(f'evaluator model drift across candidates: {sorted(evaluator_models)}')
+
+          report['generator_model_requested'] = report.pop('generator_model')
+          report['evaluator_model_requested'] = report.pop('evaluator_model')
+          report['generator_model_resolved'] = next(iter(generation_models))
+          report['evaluator_model_resolved'] = next(iter(evaluator_models))
+          report['resolved_model_consistency'] = {
+              'generation_same_model_all_15_calls': True,
+              'evaluation_same_model_all_15_calls': True,
+          }
+          report_path.write_text(
+              json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + '\n',
+              encoding='utf-8',
+          )
+          print(json.dumps({
+              'generator_model_resolved': report['generator_model_resolved'],
+              'evaluator_model_resolved': report['evaluator_model_resolved'],
+              'summary': report['summary'],
+          }, indent=2))
+          PY
+
+      - name: Upload frozen live benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prompts-v2-live-research-contradiction
+          path: /tmp/prompts-v2-live-benchmark
+          if-no-files-found: warn
+          retention-days: 30

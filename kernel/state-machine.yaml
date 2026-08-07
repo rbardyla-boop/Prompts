@@ -1,0 +1,69 @@
+schema_version: 1.0.0
+state_machine_id: prompts-v2.agent-lifecycle
+initial_state: PLANNING
+terminal_state: TERMINAL
+
+states:
+  PLANNING:
+    purpose: Select one bounded next action from the locked contract and current evidence.
+    allowed_transitions: [EXECUTING, BLOCKED, ESCALATED]
+
+  EXECUTING:
+    purpose: Perform one authorized action inside the isolated workspace.
+    allowed_transitions: [VERIFYING, REPAIRING, BLOCKED, ESCALATED]
+
+  VERIFYING:
+    purpose: Run deterministic checks and independent evaluation against the contract.
+    allowed_transitions: [REPAIRING, BLOCKED, ESCALATED, TERMINAL]
+    terminal_guard: >-
+      TERMINAL is legal only when every required completion check passes,
+      evaluator verdict is PASS, recovery passes, trace integrity passes and
+      the contract hash is unchanged.
+
+  REPAIRING:
+    purpose: Repair the first recorded failed requirement without weakening the contract.
+    allowed_transitions: [EXECUTING, VERIFYING, BLOCKED, ESCALATED]
+
+  BLOCKED:
+    purpose: Preserve state when required evidence, access or dependency is unavailable.
+    allowed_transitions: [PLANNING, EXECUTING, ESCALATED]
+
+  ESCALATED:
+    purpose: Stop autonomous work and request an authorized decision.
+    allowed_transitions: [PLANNING, BLOCKED]
+
+  TERMINAL:
+    purpose: Preserve the accepted terminal receipt and prohibit further mutation.
+    allowed_transitions: []
+
+terminal_results:
+  - PASS
+  - PASS_WITH_DISCLOSED_LIMITS
+  - SEALED_NEGATIVE_RESULT
+  - BLOCKED_EXTERNAL
+  - PROMPTS_V2_VALIDATED
+
+invariants:
+  - Every transition is recorded in the hash-chained trace.
+  - A worker DONE claim has no state-transition authority.
+  - A failed required check from VERIFYING records the first failure and enters REPAIRING.
+  - TERMINAL cannot be left or amended.
+  - The state file remains below 10 KiB; historical evidence belongs in traces and checkpoints.
+  - Unlogged transitions invalidate the run.
+
+failure_progression:
+  first_equivalent_failure: REPAIRING
+  second_equivalent_failure: PLANNING_OR_ESCALATED
+  third_equivalent_failure: ESCALATED
+
+external_state_files:
+  - agent/contract.json
+  - agent/state.json
+  - agent/permissions.json
+  - agent/budgets.json
+  - agent/progress.md
+  - agent/decisions.md
+  - agent/traces/events.jsonl
+  - agent/checkpoints/
+  - agent/evals/
+  - agent/receipts/

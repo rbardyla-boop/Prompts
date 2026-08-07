@@ -1,0 +1,159 @@
+{
+  "schema_version": "1.0.0",
+  "catalog_id": "prompts-v2.legacy-extracted",
+  "checkpoint": "PROMPTS_V2_CHECKPOINT_0003",
+  "source_checkpoint": "PROMPTS_V2_CHECKPOINT_0002",
+  "module_schema": "schemas/module.schema.json",
+  "module_count": 24,
+  "packaging": "Each object in modules is one machine-readable module manifest. File-per-module compilation remains a packaging step, not a semantic gate.",
+  "modules": [
+    {
+      "module_id": "governance.success-criteria-lock", "version": "2.0.0", "title": "Success Criteria Lock", "classification": "INVARIANT", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["HR-R2 and G1"]}],
+      "purpose": "Freeze observable success and invalidating failures before work begins.", "applies_to": ["research", "software", "benchmarking", "writing"], "does_not_apply_to": ["casual conversation"], "inputs": ["goal", "deliverables", "quality bar"], "outputs": ["locked criteria"], "context_cost": "LOW", "default_include": true,
+      "hard_rules": ["Criteria are locked before results.", "Workers cannot weaken them silently."], "checks": ["Criteria are testable.", "Amendments are recorded."], "failure_conditions": ["Post-hoc criteria.", "Worker self-grading only."]
+    },
+    {
+      "module_id": "governance.scope-amendment-lock", "version": "2.0.0", "title": "Scope and Amendment Lock", "classification": "INVARIANT", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["HR-R6 and M3"]}, {"path": "legacy/VAL_FRAMEWORK.md", "sha256": "b1c649536006764592fd865cb79daeb3e3c2e0a767706d09afe709d9395c2b1a", "sections": ["Scope Creep Protocol"]}],
+      "purpose": "Prevent silent scope changes while permitting explicit authorized amendments.", "applies_to": ["long-running projects", "research", "software"], "does_not_apply_to": ["small atomic tasks"], "inputs": ["locked scope", "amendment"], "outputs": ["scope verdict"], "context_cost": "LOW", "default_include": true,
+      "hard_rules": ["Material changes require authorization.", "Weaker gates cannot auto-approve."], "checks": ["Original contract remains recoverable."], "failure_conditions": ["Unrecorded scope drift.", "Unauthorized permission growth."]
+    },
+    {
+      "module_id": "evidence.falsification-check", "version": "2.0.0", "title": "Material Falsification Check", "classification": "INVARIANT", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["HR-R3"]}, {"path": "legacy/META_SCIENCE_INVESTIGATION_v1.1.md", "sha256": "d174447743e7ad906063c69ff7728cb96a4962438d5954294a101a0b12a49a70", "sections": ["Falsification Gap"]}],
+      "purpose": "Require a serious attempt to disprove empirical or performance claims.", "applies_to": ["empirical research", "benchmarking", "causal analysis"], "does_not_apply_to": ["translation", "pure fiction"], "inputs": ["claim", "evidence"], "outputs": ["falsification result"], "context_cost": "MEDIUM", "default_include": true,
+      "hard_rules": ["Execute at least one material falsifier."], "checks": ["The falsifier could change the conclusion."], "failure_conditions": ["Success without falsification.", "Only trivial tests."]
+    },
+    {
+      "module_id": "evidence.metric-integrity", "version": "2.0.0", "title": "Metric Integrity Audit", "classification": "INVARIANT", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["HR-R5 and M4"]}],
+      "purpose": "Verify metrics measure the intended construct and resist shortcut wins.", "applies_to": ["benchmarking", "evaluation", "optimization"], "does_not_apply_to": ["tasks without metrics"], "inputs": ["objective", "metric"], "outputs": ["metric verdict"], "context_cost": "MEDIUM", "default_include": true,
+      "hard_rules": ["Expose proxy relationships and blind spots."], "checks": ["Run a shortcut audit."], "failure_conditions": ["Metric improves while objective does not."]
+    },
+    {
+      "module_id": "evidence.evidence-language-alignment", "version": "2.0.0", "title": "Evidence-Language Alignment", "classification": "INVARIANT", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["HR-R7"]}, {"path": "legacy/CRIME_ALPHA v1.md", "sha256": "c7b320a08d38aa29d5c341953b9856cad23c5ff594e0a47c99c8999dfdef859e", "sections": ["HR-CR3"]}],
+      "purpose": "Constrain factual wording to evidence authority, replication and completeness.", "applies_to": ["research", "reporting", "factual writing"], "does_not_apply_to": ["fiction"], "inputs": ["claim", "evidence grade"], "outputs": ["permitted wording"], "context_cost": "LOW", "default_include": true,
+      "hard_rules": ["No claim exceeds its weakest load-bearing evidence."], "checks": ["Major claims carry evidence grades."], "failure_conditions": ["Established language for preliminary evidence."]
+    },
+    {
+      "module_id": "evidence.proxy-triangulation", "version": "2.0.0", "title": "Independent Proxy Triangulation", "classification": "DOMAIN_METHOD", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/THE ALPHA SUITE v1.0.md", "sha256": "e25a3aa4a3c0d4359c7531e523c12507626d7871e1a109fdbf0f9bb209b1ee9a", "sections": ["Physical Grounding"]}, {"path": "legacy/CRIME_ALPHA v1.md", "sha256": "c7b320a08d38aa29d5c341953b9856cad23c5ff594e0a47c99c8999dfdef859e", "sections": ["Physical Grounding"]}, {"path": "legacy/GEOPOL_ALPHA v1.md", "sha256": "e383bf8754cb41667a4e0ad84cfbb63dfab04528ebbf8ed7601fda0b2a41debf", "sections": ["Physical Grounding"]}],
+      "purpose": "Compare measurements with independent sources having different failure modes.", "applies_to": ["public-data research", "policy analysis", "measurement risk"], "does_not_apply_to": ["domains without meaningful proxies"], "inputs": ["claim", "primary measure", "proxies"], "outputs": ["triangulation report"], "context_cost": "HIGH", "default_include": false,
+      "hard_rules": ["Evaluate sources rather than presuming truth or falsity.", "Justify proxy validity."], "checks": ["Compare at least two source families."], "failure_conditions": ["Preferred proxy treated as ground truth.", "Divergence automatically means deception."]
+    },
+    {
+      "module_id": "evidence.regime-change-gating", "version": "2.0.0", "title": "Regime Change Detection and Gating", "classification": "DOMAIN_METHOD", "status": "PROFILE_SPECIFIC",
+      "source_refs": [{"path": "legacy/THE ALPHA SUITE v1.0.md", "sha256": "e25a3aa4a3c0d4359c7531e523c12507626d7871e1a109fdbf0f9bb209b1ee9a", "sections": ["Regime Gating"]}],
+      "purpose": "Detect structural changes before applying models learned under another regime.", "applies_to": ["time-series research", "policy shock analysis"], "does_not_apply_to": ["static tasks", "insufficient samples"], "inputs": ["time series", "candidate regimes"], "outputs": ["gating decision"], "context_cost": "HIGH", "default_include": false,
+      "hard_rules": ["Preregister or sensitivity-test thresholds.", "No post-hoc gate tuning."], "checks": ["Retain a no-regime baseline."], "failure_conditions": ["Fixed legacy threshold imported universally."]
+    },
+    {
+      "module_id": "evidence.multiple-testing-deflation", "version": "2.0.0", "title": "Multiple-Testing Deflation", "classification": "DOMAIN_METHOD", "status": "PROFILE_SPECIFIC",
+      "source_refs": [{"path": "legacy/THE ALPHA SUITE v1.0.md", "sha256": "e25a3aa4a3c0d4359c7531e523c12507626d7871e1a109fdbf0f9bb209b1ee9a", "sections": ["Deflation Discipline"]}],
+      "purpose": "Correct selected performance claims for repeated search with a metric-appropriate method.", "applies_to": ["quantitative strategy research", "large model searches"], "does_not_apply_to": ["ordinary factual claims", "small qualitative studies"], "inputs": ["raw metric", "trial count"], "outputs": ["adjusted metric"], "context_cost": "HIGH", "default_include": false,
+      "hard_rules": ["Match correction to the statistical construct.", "Count or bound all tried configurations."], "checks": ["Report raw and adjusted results."], "failure_conditions": ["DSR applied mechanically to unrelated metrics.", "Trial count understated."]
+    },
+    {
+      "module_id": "evidence.cross-domain-alignment", "version": "2.0.0", "title": "Cross-Domain Alignment", "classification": "DOMAIN_METHOD", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/COMPARE_ALPHA v1.md", "sha256": "cf5af7436c99fe051d15ac82fa4658800e79ce7b9b4c78d19922e5ee43a65c51", "sections": ["Core Pillars and Workflow"]}],
+      "purpose": "Align geography, time, definitions and units before cross-domain comparison.", "applies_to": ["cross-domain research", "multi-dataset synthesis"], "does_not_apply_to": ["single-source summary"], "inputs": ["datasets", "time windows", "definitions"], "outputs": ["alignment map"], "context_cost": "HIGH", "default_include": false,
+      "hard_rules": ["No inference before alignment checks."], "checks": ["Reconcile time, geography, units and definitions."], "failure_conditions": ["Correlation on mismatched windows."]
+    },
+    {
+      "module_id": "evidence.incentive-autopsy", "version": "2.0.0", "title": "Incentive Autopsy", "classification": "HEURISTIC", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/COMPARE_ALPHA v1.md", "sha256": "cf5af7436c99fe051d15ac82fa4658800e79ce7b9b4c78d19922e5ee43a65c51", "sections": ["Incentive Autopsy"]}, {"path": "legacy/META_SCIENCE_INVESTIGATION_v1.1.md", "sha256": "d174447743e7ad906063c69ff7728cb96a4962438d5954294a101a0b12a49a70", "sections": ["Authority Inversion"]}],
+      "purpose": "Map incentives as hypotheses without treating motive as proof.", "applies_to": ["institutional analysis", "source criticism"], "does_not_apply_to": ["tasks where incentives are irrelevant"], "inputs": ["actors", "benefits", "costs"], "outputs": ["incentive map"], "context_cost": "MEDIUM", "default_include": false,
+      "hard_rules": ["Include benign and adverse explanations.", "Mark observed versus inferred motives."], "checks": ["Separate direct evidence from structural incentives."], "failure_conditions": ["Beneficiary assumed causal.", "Disagreement treated as corruption."]
+    },
+    {
+      "module_id": "evidence.explainability-audit", "version": "2.0.0", "title": "Feature Contribution Audit", "classification": "DOMAIN_METHOD", "status": "PROFILE_SPECIFIC",
+      "source_refs": [{"path": "legacy/GEOPOL_ALPHA v1.md", "sha256": "e383bf8754cb41667a4e0ad84cfbb63dfab04528ebbf8ed7601fda0b2a41debf", "sections": ["SHAP Audit"]}],
+      "purpose": "Inspect feature contributions for leakage and shortcuts without claiming causality.", "applies_to": ["predictive models", "ranking models"], "does_not_apply_to": ["systems without feature predictions"], "inputs": ["model", "features"], "outputs": ["contribution report"], "context_cost": "HIGH", "default_include": false,
+      "hard_rules": ["Explainability is diagnostic, not causal proof."], "checks": ["Review dominant features and ablate when feasible."], "failure_conditions": ["SHAP treated as causal.", "Expected signs forced."]
+    },
+    {
+      "module_id": "research.curiosity-lens", "version": "2.0.0", "title": "Curiosity Lens", "classification": "HEURISTIC", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/META_SCIENCE_INVESTIGATION_v1.1.md", "sha256": "d174447743e7ad906063c69ff7728cb96a4962438d5954294a101a0b12a49a70", "sections": ["Curiosity Lens and Case Study"]}],
+      "purpose": "Separate evidence for, evidence against, unknowns and missing tests.", "applies_to": ["exploratory research", "disputed claims"], "does_not_apply_to": ["advocacy-only requests"], "inputs": ["topic", "positions", "evidence"], "outputs": ["balanced evidence ledger"], "context_cost": "MEDIUM", "default_include": false,
+      "hard_rules": ["Investigate before endorsing or dismissing.", "Lack of investigation is not positive evidence."], "checks": ["Represent evidence for and against."], "failure_conditions": ["Suppression is presupposed.", "Absence of evidence becomes evidence."]
+    },
+    {
+      "module_id": "research.competing-view-search", "version": "2.0.0", "title": "Competing View Search", "classification": "HEURISTIC", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/KLEON_CREATIVE_LAYER_v1.1.md", "sha256": "e5b9b501f8f2d918457151ce8390a2708007e61f04d0535cd9e132d16abdb4fd", "sections": ["Contrarian Check"]}],
+      "purpose": "Seek the strongest relevant disagreement before committing to a frame.", "applies_to": ["research", "architecture", "policy analysis"], "does_not_apply_to": ["simple deterministic tasks"], "inputs": ["current view"], "outputs": ["steelman"], "context_cost": "MEDIUM", "default_include": false,
+      "hard_rules": ["Seek material disagreement rather than performative balance."], "checks": ["Represent one credible competing account fairly."], "failure_conditions": ["Select only weak opponents.", "Contrarian status substitutes for evidence."]
+    },
+    {
+      "module_id": "prompting.goal-format-tool-clarity", "version": "2.0.0", "title": "Goal, Format and Tool Clarity", "classification": "TOOL_ADAPTER", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_PROMPTING_GUIDE.md", "sha256": "b564800b60069a8c10520bcb82b5c0b8b4efbe3e1c1f8866773536b628933e1f", "sections": ["Key Principles and Step-by-Step Guide"]}],
+      "purpose": "Normalize a task into an objective, constraints, output form and justified tool plan.", "applies_to": ["model-mediated tasks"], "does_not_apply_to": [], "inputs": ["user goal", "tool inventory"], "outputs": ["normalized request"], "context_cost": "LOW", "default_include": true,
+      "hard_rules": ["Select tools because needed, not because a legacy platform named them."], "checks": ["Objective and deliverable are explicit."], "failure_conditions": ["Platform syntax leaks into kernel.", "Tools are forced unnecessarily."]
+    },
+    {
+      "module_id": "creative.influence-map", "version": "2.0.0", "title": "Influence Map", "classification": "HEURISTIC", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/KLEON_CREATIVE_LAYER_v1.1.md", "sha256": "e5b9b501f8f2d918457151ce8390a2708007e61f04d0535cd9e132d16abdb4fd", "sections": ["Part 1 Influence Map"]}],
+      "purpose": "Make influences explicit and expose common patterns and echo chambers.", "applies_to": ["creative work", "research direction", "product design"], "does_not_apply_to": ["routine factual lookup"], "inputs": ["project", "sources"], "outputs": ["influence map"], "context_cost": "MEDIUM", "default_include": false,
+      "hard_rules": ["Name borrowed mechanisms.", "Influence is not authority."], "checks": ["Record attribution and consider opposing influences."], "failure_conditions": ["Copy without transformation."]
+    },
+    {
+      "module_id": "creative.forced-remix", "version": "2.0.0", "title": "Forced Cross-Domain Remix", "classification": "HEURISTIC", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/KLEON_CREATIVE_LAYER_v1.1.md", "sha256": "e5b9b501f8f2d918457151ce8390a2708007e61f04d0535cd9e132d16abdb4fd", "sections": ["Part 2 Remix Generator"]}],
+      "purpose": "Generate materially different mechanisms through unrelated domains and a simplest-version test.", "applies_to": ["creative design", "architecture", "stuck problems"], "does_not_apply_to": ["frozen validation"], "inputs": ["problem", "constraints"], "outputs": ["remix candidates"], "context_cost": "MEDIUM", "default_include": false,
+      "hard_rules": ["At least one candidate changes the mechanism."], "checks": ["Candidates are testable and name a first experiment."], "failure_conditions": ["Metaphor mistaken for implementation.", "Scope expands without a gate."]
+    },
+    {
+      "module_id": "creative.side-project-validator", "version": "2.0.0", "title": "Side-Project Validator", "classification": "HEURISTIC", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/KLEON_CREATIVE_LAYER_v1.1.md", "sha256": "e5b9b501f8f2d918457151ce8390a2708007e61f04d0535cd9e132d16abdb4fd", "sections": ["Part 4 Side Project Validator"]}, {"path": "legacy/VAL_FRAMEWORK.md", "sha256": "b1c649536006764592fd865cb79daeb3e3c2e0a767706d09afe709d9395c2b1a", "sections": ["Vibe Check"]}],
+      "purpose": "Prevent new ideas from displacing active work without an opportunity-cost decision.", "applies_to": ["personal projects", "research portfolios"], "does_not_apply_to": ["mandatory safety repair"], "inputs": ["new idea", "active project"], "outputs": ["START, DEFER or KILL verdict"], "context_cost": "LOW", "default_include": false,
+      "hard_rules": ["Active scope lock has priority.", "Excitement cannot waive terminal obligations."], "checks": ["Name displaced work and a revisit trigger."], "failure_conditions": ["New project begins without closing current contract.", "Vibe alone authorizes work."]
+    },
+    {
+      "module_id": "creative.transform-with-attribution", "version": "2.0.0", "title": "Transform With Attribution", "classification": "HEURISTIC", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/KLEON_CREATIVE_LAYER_v1.1.md", "sha256": "e5b9b501f8f2d918457151ce8390a2708007e61f04d0535cd9e132d16abdb4fd", "sections": ["Part 6 Steal and Transform"]}],
+      "purpose": "Separate learning copies from publishable transformation and preserve attribution.", "applies_to": ["creative writing", "design", "framework development"], "does_not_apply_to": ["unlicensed verbatim reproduction"], "inputs": ["source", "borrowed element"], "outputs": ["transformation record"], "context_cost": "MEDIUM", "default_include": false,
+      "hard_rules": ["Practice copies are not shipped as original.", "Material influence is disclosed."], "checks": ["Add distinct mechanism, context or expression and check licence."], "failure_conditions": ["Cosmetic edits called transformation.", "Attribution removed."]
+    },
+    {
+      "module_id": "development.secure-defaults", "version": "2.0.0", "title": "Secure Development Defaults", "classification": "INVARIANT", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["HR-D2"]}],
+      "purpose": "Prevent secret, injection, validation and error-handling failures in generated software.", "applies_to": ["software development", "automation"], "does_not_apply_to": ["non-code tasks"], "inputs": ["design", "untrusted inputs"], "outputs": ["security requirements"], "context_cost": "LOW", "default_include": true,
+      "hard_rules": ["Do not hard-code secrets.", "Validate inputs.", "Avoid unsafe command or query concatenation."], "checks": ["Secret scan and negative-input tests pass."], "failure_conditions": ["Credentials enter source or trace.", "Untrusted input reaches an interpreter unsafely."]
+    },
+    {
+      "module_id": "development.resilience-and-test-baseline", "version": "2.0.0", "title": "Resilience and Test Baseline", "classification": "CONFIGURABLE_POLICY", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["HR-D3 and HR-D4"]}],
+      "purpose": "Require bounded failure handling and executable tests proportionate to risk.", "applies_to": ["software development", "tool integrations"], "does_not_apply_to": ["static documents"], "inputs": ["component", "failure modes"], "outputs": ["test plan"], "context_cost": "MEDIUM", "default_include": true,
+      "hard_rules": ["External calls are bounded.", "Retries are bounded and idempotency-aware."], "checks": ["Execute main and error-path tests."], "failure_conditions": ["Unbounded retries.", "Blanket patterns where irrelevant."]
+    },
+    {
+      "module_id": "workflow.minimum-viable-experiment", "version": "2.0.0", "title": "Minimum Viable Experiment", "classification": "HEURISTIC", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["SR-1 and G3"]}, {"path": "legacy/VAL_FRAMEWORK.md", "sha256": "b1c649536006764592fd865cb79daeb3e3c2e0a767706d09afe709d9395c2b1a", "sections": ["7-Phase Workflow"]}],
+      "purpose": "Test the core mechanism cheaply before full resources or polish.", "applies_to": ["research", "software", "product design"], "does_not_apply_to": ["final sealed evaluation"], "inputs": ["hypothesis", "budget"], "outputs": ["minimal experiment"], "context_cost": "LOW", "default_include": false,
+      "hard_rules": ["The experiment must be able to falsify the mechanism."], "checks": ["Execute a sanity test and define scale-up criteria."], "failure_conditions": ["A polished demo substitutes for a mechanism test.", "The MVE becomes permanent."]
+    },
+    {
+      "module_id": "monitoring.scope-progress-claim", "version": "2.0.0", "title": "Scope, Progress and Claim Monitor", "classification": "CONFIGURABLE_POLICY", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["M2, M3 and M4"]}],
+      "purpose": "Detect no-progress loops, scope drift and claims outrunning evidence.", "applies_to": ["long-running agents", "multi-phase projects"], "does_not_apply_to": ["single-response tasks"], "inputs": ["state", "budget", "claims"], "outputs": ["warnings", "mode transition"], "context_cost": "LOW", "default_include": true,
+      "hard_rules": ["Measure progress by external state change.", "Warnings trigger repair, replan or stop."], "checks": ["Record budgets, state deltas and claim checks."], "failure_conditions": ["Narrated progress without artifact change.", "Warnings have no enforcement."]
+    },
+    {
+      "module_id": "workflow.gated-phase-control", "version": "2.0.0", "title": "Gated Phase Control", "classification": "CONFIGURABLE_POLICY", "status": "ACTIVE",
+      "source_refs": [{"path": "legacy/GROK_APEX_4.4.md", "sha256": "80be44ad2eaf3e59d88523a08e65f4923567ec2b802a13b26f93ee3bdb040f39", "sections": ["G1-G5"]}, {"path": "legacy/VAL_FRAMEWORK.md", "sha256": "b1c649536006764592fd865cb79daeb3e3c2e0a767706d09afe709d9395c2b1a", "sections": ["7-Phase Workflow"]}],
+      "purpose": "Move work through explicit phases with independently checkable exits.", "applies_to": ["long-running projects", "research", "software", "publication"], "does_not_apply_to": ["small atomic tasks"], "inputs": ["contract", "gate checks"], "outputs": ["legal transition"], "context_cost": "MEDIUM", "default_include": true,
+      "hard_rules": ["A phase cannot close while a required gate is false.", "Gate evidence lives outside conversation."], "checks": ["Each phase has entry and exit checks."], "failure_conditions": ["Worker advances state by assertion.", "Documentation is confused with completion."]
+    },
+    {
+      "module_id": "workflow.vibe-and-sustainability", "version": "2.0.0", "title": "Vibe and Sustainability Check", "classification": "HEURISTIC", "status": "PROFILE_SPECIFIC",
+      "source_refs": [{"path": "legacy/VAL_FRAMEWORK.md", "sha256": "b1c649536006764592fd865cb79daeb3e3c2e0a767706d09afe709d9395c2b1a", "sections": ["Core Pillars and Vibe Check"]}, {"path": "legacy/KLEON_CREATIVE_LAYER_v1.1.md", "sha256": "e5b9b501f8f2d918457151ce8390a2708007e61f04d0535cd9e132d16abdb4fd", "sections": ["Creative Routine Builder"]}],
+      "purpose": "Track motivation and routine without allowing mood scores to waive evidence or safety gates.", "applies_to": ["personal creative work", "long-running solo projects"], "does_not_apply_to": ["safety approval", "terminal completion"], "inputs": ["project", "energy"], "outputs": ["sustainability adjustment"], "context_cost": "LOW", "default_include": false,
+      "hard_rules": ["Vibe informs scheduling only.", "Terminal success remains evidence-based."], "checks": ["Change workload or cadence, not truth criteria."], "failure_conditions": ["Score directly validates or kills a project.", "Vibe is presented as objective."]
+    }
+  ],
+  "counts": {"INVARIANT": 6, "DOMAIN_METHOD": 5, "HEURISTIC": 9, "CONFIGURABLE_POLICY": 3, "TOOL_ADAPTER": 1, "ACTIVE": 20, "PROFILE_SPECIFIC": 4},
+  "validation": {"module_count": "PASS", "unique_ids": "PASS", "required_fields": "PASS", "source_sha256_format": "PASS"},
+  "legacy_files_modified": false,
+  "next_required_action": "Build RULE_GRAPH.json, CONFLICT_LEDGER.md, PRECEDENCE_POLICY.yaml and DEPRECATION_LEDGER.md."
+}

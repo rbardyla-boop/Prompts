@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0.0",
+  "graph_id": "prompts-v2.rule-graph",
+  "source_checkpoint": "PROMPTS_V2_CHECKPOINT_0003",
+  "precedence_policy": "PRECEDENCE_POLICY.yaml",
+  "node_count": 24,
+  "nodes": [
+    {"id": "governance.success-criteria-lock", "kind": "INVARIANT", "status": "ACTIVE", "rank": 3},
+    {"id": "governance.scope-amendment-lock", "kind": "INVARIANT", "status": "ACTIVE", "rank": 3},
+    {"id": "evidence.falsification-check", "kind": "INVARIANT", "status": "ACTIVE", "rank": 3},
+    {"id": "evidence.metric-integrity", "kind": "INVARIANT", "status": "ACTIVE", "rank": 3},
+    {"id": "evidence.evidence-language-alignment", "kind": "INVARIANT", "status": "ACTIVE", "rank": 3},
+    {"id": "evidence.proxy-triangulation", "kind": "DOMAIN_METHOD", "status": "ACTIVE", "rank": 6},
+    {"id": "evidence.regime-change-gating", "kind": "DOMAIN_METHOD", "status": "PROFILE_SPECIFIC", "rank": 6},
+    {"id": "evidence.multiple-testing-deflation", "kind": "DOMAIN_METHOD", "status": "PROFILE_SPECIFIC", "rank": 6},
+    {"id": "evidence.cross-domain-alignment", "kind": "DOMAIN_METHOD", "status": "ACTIVE", "rank": 6},
+    {"id": "evidence.incentive-autopsy", "kind": "HEURISTIC", "status": "ACTIVE", "rank": 7},
+    {"id": "evidence.explainability-audit", "kind": "DOMAIN_METHOD", "status": "PROFILE_SPECIFIC", "rank": 6},
+    {"id": "research.curiosity-lens", "kind": "HEURISTIC", "status": "ACTIVE", "rank": 7},
+    {"id": "research.competing-view-search", "kind": "HEURISTIC", "status": "ACTIVE", "rank": 7},
+    {"id": "prompting.goal-format-tool-clarity", "kind": "TOOL_ADAPTER", "status": "ACTIVE", "rank": 8},
+    {"id": "creative.influence-map", "kind": "HEURISTIC", "status": "ACTIVE", "rank": 7},
+    {"id": "creative.forced-remix", "kind": "HEURISTIC", "status": "ACTIVE", "rank": 7},
+    {"id": "creative.side-project-validator", "kind": "HEURISTIC", "status": "ACTIVE", "rank": 7},
+    {"id": "creative.transform-with-attribution", "kind": "HEURISTIC", "status": "ACTIVE", "rank": 7},
+    {"id": "development.secure-defaults", "kind": "INVARIANT", "status": "ACTIVE", "rank": 3},
+    {"id": "development.resilience-and-test-baseline", "kind": "CONFIGURABLE_POLICY", "status": "ACTIVE", "rank": 5},
+    {"id": "workflow.minimum-viable-experiment", "kind": "HEURISTIC", "status": "ACTIVE", "rank": 7},
+    {"id": "monitoring.scope-progress-claim", "kind": "CONFIGURABLE_POLICY", "status": "ACTIVE", "rank": 5},
+    {"id": "workflow.gated-phase-control", "kind": "CONFIGURABLE_POLICY", "status": "ACTIVE", "rank": 5},
+    {"id": "workflow.vibe-and-sustainability", "kind": "HEURISTIC", "status": "PROFILE_SPECIFIC", "rank": 7}
+  ],
+  "edges": [
+    {"from": "workflow.gated-phase-control", "to": "governance.success-criteria-lock", "type": "REQUIRES"},
+    {"from": "workflow.gated-phase-control", "to": "governance.scope-amendment-lock", "type": "REQUIRES"},
+    {"from": "monitoring.scope-progress-claim", "to": "governance.scope-amendment-lock", "type": "REQUIRES"},
+    {"from": "monitoring.scope-progress-claim", "to": "evidence.evidence-language-alignment", "type": "REQUIRES"},
+    {"from": "evidence.falsification-check", "to": "evidence.metric-integrity", "type": "COOPERATES_WITH"},
+    {"from": "evidence.multiple-testing-deflation", "to": "evidence.metric-integrity", "type": "REQUIRES"},
+    {"from": "evidence.regime-change-gating", "to": "evidence.metric-integrity", "type": "REQUIRES"},
+    {"from": "evidence.explainability-audit", "to": "evidence.metric-integrity", "type": "REQUIRES"},
+    {"from": "evidence.proxy-triangulation", "to": "evidence.evidence-language-alignment", "type": "REQUIRES"},
+    {"from": "evidence.cross-domain-alignment", "to": "evidence.proxy-triangulation", "type": "COOPERATES_WITH"},
+    {"from": "evidence.incentive-autopsy", "to": "evidence.evidence-language-alignment", "type": "SUBORDINATE_TO"},
+    {"from": "research.curiosity-lens", "to": "evidence.evidence-language-alignment", "type": "SUBORDINATE_TO"},
+    {"from": "research.competing-view-search", "to": "evidence.evidence-language-alignment", "type": "SUBORDINATE_TO"},
+    {"from": "creative.side-project-validator", "to": "governance.scope-amendment-lock", "type": "SUBORDINATE_TO"},
+    {"from": "creative.forced-remix", "to": "governance.scope-amendment-lock", "type": "SUBORDINATE_TO"},
+    {"from": "workflow.vibe-and-sustainability", "to": "governance.success-criteria-lock", "type": "SUBORDINATE_TO"},
+    {"from": "workflow.minimum-viable-experiment", "to": "workflow.gated-phase-control", "type": "SUBORDINATE_TO"},
+    {"from": "prompting.goal-format-tool-clarity", "to": "governance.success-criteria-lock", "type": "CANNOT_OVERRIDE"},
+    {"from": "development.resilience-and-test-baseline", "to": "development.secure-defaults", "type": "REQUIRES"},
+    {"from": "creative.transform-with-attribution", "to": "development.secure-defaults", "type": "COOPERATES_WITH"}
+  ],
+  "selection_groups": {
+    "always_when_applicable": [
+      "governance.success-criteria-lock",
+      "governance.scope-amendment-lock",
+      "evidence.evidence-language-alignment",
+      "development.secure-defaults"
+    ],
+    "task_policy": [
+      "development.resilience-and-test-baseline",
+      "monitoring.scope-progress-claim",
+      "workflow.gated-phase-control"
+    ],
+    "opt_in_profile_specific": [
+      "evidence.regime-change-gating",
+      "evidence.multiple-testing-deflation",
+      "evidence.explainability-audit",
+      "workflow.vibe-and-sustainability"
+    ],
+    "heuristic_only": [
+      "evidence.incentive-autopsy",
+      "research.curiosity-lens",
+      "research.competing-view-search",
+      "creative.influence-map",
+      "creative.forced-remix",
+      "creative.side-project-validator",
+      "creative.transform-with-attribution",
+      "workflow.minimum-viable-experiment"
+    ]
+  },
+  "graph_invariants": [
+    "No edge may allow a higher numeric rank to override a lower numeric rank.",
+    "PROFILE_SPECIFIC nodes are never selected without task-pack or contract authorization.",
+    "HEURISTIC nodes cannot authorize permissions, amendments, terminal success or release.",
+    "TOOL_ADAPTER nodes cannot modify the contract or evidence standard.",
+    "All required dependencies must be selected before their dependents.",
+    "A dependency cycle is invalid and blocks composition."
+  ],
+  "known_cycles": [],
+  "validation_status": {
+    "node_count_matches_catalog": "PASS",
+    "all_edge_nodes_exist": "PASS",
+    "declared_cycles": 0,
+    "automated_cycle_detection": "PENDING",
+    "deterministic_topological_order": "PENDING"
+  },
+  "next_required_action": "Implement graph validation, cycle detection and deterministic topological ordering in the prompt composer kernel."
+}

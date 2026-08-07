@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/rbardyla-boop/Prompts/schemas/trace.schema.json",
+  "title": "PROMPTS v2 Hash-Chained Trace Event",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "sequence",
+    "timestamp",
+    "previous_hash",
+    "event_type",
+    "state_before",
+    "state_after",
+    "evidence",
+    "event_hash"
+  ],
+  "properties": {
+    "sequence": {"type": "integer", "minimum": 1},
+    "timestamp": {"type": "string", "format": "date-time"},
+    "previous_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "event_type": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]*$"},
+    "state_before": {"type": ["string", "null"]},
+    "state_after": {"type": ["string", "null"]},
+    "state_before_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "state_after_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "evidence": {"type": "object"},
+    "event_hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}
