@@ -152,9 +152,11 @@ jobs:
               raise SystemExit('Could not recover test count from unit-test log')
 
           checkout_sha = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          generated_status = subprocess.check_output(['git', 'status', '--porcelain=v1'], text=True).splitlines()
+          subprocess.run(['git', 'clean', '-fdx'], check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
           git_status = subprocess.check_output(['git', 'status', '--porcelain=v1'], text=True)
           if git_status.strip():
-              raise SystemExit('Candidate checkout became dirty during validation')
+              raise SystemExit(f'Candidate tracked checkout changed during validation: {git_status}')
 
           receipt = {
               'schema_version': '1.0.0',
@@ -171,7 +173,8 @@ jobs:
               'terminal_harness': 'PASS',
               'deterministic_selection': 'PASS',
               'quarantined_tail_exclusion': 'PASS',
-              'clean_worktree_after_validation': True,
+              'build_generated_paths_before_cleanup': generated_status,
+              'tracked_worktree_clean_after_cleanup': True,
               'benchmark_package_count': len(package_receipts) * 3,
               'benchmark_fixtures': package_receipts,
               'matched_package_invariants': {
