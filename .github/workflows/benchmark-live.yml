@@ -40,6 +40,40 @@ jobs:
           npm install --global @github/copilot
           copilot --version
 
+      - name: Probe Copilot Auto model and JSONL surface
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          rm -rf /tmp/copilot-probe-home /tmp/copilot-probe-work
+          mkdir -p /tmp/copilot-probe-home /tmp/copilot-probe-work
+          export COPILOT_HOME=/tmp/copilot-probe-home
+          export COPILOT_AUTO_UPDATE=false
+          cd /tmp/copilot-probe-work
+          set +e
+          copilot \
+            --prompt "Reply exactly READY and do not use tools." \
+            --model auto \
+            --context default \
+            --max-ai-credits 30 \
+            --output-format json \
+            --disable-builtin-mcps \
+            --no-ask-user \
+            --no-custom-instructions \
+            --no-auto-update \
+            --no-remote \
+            --no-remote-export \
+            --no-experimental \
+            --no-color \
+            > /tmp/copilot-probe.jsonl 2> /tmp/copilot-probe.stderr
+          status=$?
+          set -e
+          echo "Copilot probe exit: $status"
+          echo "--- stdout JSONL ---"
+          cat /tmp/copilot-probe.jsonl || true
+          echo "--- stderr ---"
+          cat /tmp/copilot-probe.stderr || true
+          test "$status" -eq 0
+
       - name: Run preregistered 5xA/B/C matched comparison
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
