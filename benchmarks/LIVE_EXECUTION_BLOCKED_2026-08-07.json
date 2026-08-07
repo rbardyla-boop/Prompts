@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0.0",
+  "project": "PROMPTS V2 — GAUNTLET AGENT OS",
+  "receipt_type": "live-benchmark-external-blocker",
+  "observed_at": "2026-08-07T23:07:39Z",
+  "github": {
+    "repository": "rbardyla-boop/Prompts",
+    "pull_request": 3,
+    "workflow_run_id": 31226101171,
+    "job_id": 93020602790
+  },
+  "execution_surface": "github-copilot-cli",
+  "copilot_cli_version": "1.0.78",
+  "auto_routing": {
+    "resolved": true,
+    "chosen_model": "gpt-5-mini",
+    "reasoning_bucket": "low",
+    "available_models": [
+      "claude-haiku-4.5",
+      "gpt-5-mini"
+    ],
+    "routing_method": "hydra",
+    "fallback": false
+  },
+  "model_call": {
+    "reached_provider": true,
+    "endpoint": "/responses",
+    "status_code": 402,
+    "error_code": "quota_exceeded",
+    "error_type": "quota",
+    "message": "You have exceeded your monthly quota"
+  },
+  "quota_snapshot": {
+    "chat": {
+      "entitlement_requests": 200,
+      "used_requests": 200,
+      "remaining_percentage": 0,
+      "reset_at": "2026-09-01T00:00:00Z"
+    },
+    "premium_interactions": {
+      "entitlement_requests": 0,
+      "used_requests": 0,
+      "remaining_percentage": 0,
+      "reset_at": "2026-09-01T00:00:00Z"
+    },
+    "completions": {
+      "entitlement_requests": 2000,
+      "used_requests": 0,
+      "remaining_percentage": 100,
+      "reset_at": "2026-09-01T00:00:00Z"
+    }
+  },
+  "benchmark_effect": {
+    "fixture": "research-contradiction-001",
+    "planned_repetitions_per_arm": 5,
+    "planned_generation_calls": 15,
+    "planned_blinded_evaluations": 15,
+    "accepted_generation_calls": 0,
+    "accepted_blinded_evaluations": 0,
+    "quality_verdict_produced": false
+  },
+  "classification": "BLOCKED_EXTERNAL",
+  "claims_not_supported": [
+    "PROMPTS v2 beat the strongest legacy prompt.",
+    "PROMPTS v2 lost to the strongest legacy prompt.",
+    "The live comparison gate passed.",
+    "PROMPTS_V2_VALIDATED has been reached."
+  ],
+  "resume_condition": "An authorized live inference surface has sufficient quota to execute the frozen matched A/B/C packages without changing the benchmark task, rubric or decision rule."
+}
