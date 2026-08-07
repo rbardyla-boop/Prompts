@@ -6,6 +6,9 @@ on:
       - revival/prompts-v2
     paths:
       - .github/workflows/benchmark-live.yml
+  pull_request:
+    paths:
+      - .github/workflows/benchmark-live.yml
   workflow_dispatch:
 
 permissions:
