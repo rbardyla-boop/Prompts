@@ -1,32 +1,44 @@
 name: PROMPTS v2 live comparison benchmark
 
 on:
-  push:
-    branches:
-      - revival/prompts-v2
-    paths:
-      - .github/workflows/benchmark-live.yml
   pull_request:
     paths:
+      - promptctl/live_benchmark.py
+      - tests/test_live_benchmark.py
+      - benchmarks/**
+      - taskpacks/**
+      - modules/legacy-extracted/MODULE_CATALOG.json
+      - RULE_GRAPH.json
+      - PRECEDENCE_POLICY.yaml
       - .github/workflows/benchmark-live.yml
   workflow_dispatch:
 
+concurrency:
+  group: prompts-v2-live-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
-  models: read
+  copilot-requests: write
 
 jobs:
   research-contradiction:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
 
-      - name: Install PROMPTS v2
-        run: python -m pip install --disable-pip-version-check -e .
+      - name: Install PROMPTS v2 and Copilot CLI
+        run: |
+          python -m pip install --disable-pip-version-check -e .
+          npm install --global @github/copilot
+          copilot --version
 
       - name: Run preregistered 5xA/B/C matched comparison
         env:
@@ -38,15 +50,14 @@ jobs:
             --root . \
             --fixture research-contradiction-001 \
             --output /tmp/prompts-v2-live-benchmark \
-            --generator-model openai/gpt-4.1 \
-            --evaluator-model openai/gpt-4o \
+            --generator-model gpt-5.4 \
+            --evaluator-model claude-haiku-4.5 \
             --repetitions 5 \
             --randomization-seed "$seed" \
-            --generation-max-tokens 1600 \
-            --evaluator-max-tokens 700 \
-            --temperature 0.3 \
-            --timeout-seconds 120 \
-            --retries 2
+            --generation-max-ai-credits 10 \
+            --evaluator-max-ai-credits 5 \
+            --timeout-seconds 180 \
+            --retries 1
 
       - name: Verify raw evidence count and report boundary
         run: |
@@ -58,16 +69,20 @@ jobs:
 
           report = json.loads(Path('/tmp/prompts-v2-live-benchmark/comparison-report.json').read_text(encoding='utf-8'))
           assert report['public_development_evidence_only'] is True
+          assert report['execution_adapter'] == 'github-copilot-cli'
           assert report['repetitions_per_arm'] == 5
           assert report['summary']['final_validation_eligible'] is False
           assert set(report['summary']['arms']) == {'A', 'B', 'C'}
+          assert all(row['prompt_tokens'] > 0 for row in report['rows'])
+          assert all(row['completion_tokens'] > 0 for row in report['rows'])
           print(json.dumps(report['summary'], indent=2))
           PY
 
       - name: Upload frozen live benchmark evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: prompts-v2-live-research-contradiction
           path: /tmp/prompts-v2-live-benchmark
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
