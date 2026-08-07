@@ -3,7 +3,11 @@ from __future__ import annotations
 import json
 import unittest
 
-from promptctl.live_benchmark import parse_json_object, summarize_results
+from promptctl.live_benchmark import (
+    parse_copilot_jsonl,
+    parse_json_object,
+    summarize_results,
+)
 
 
 class LiveBenchmarkTests(unittest.TestCase):
@@ -12,6 +16,75 @@ class LiveBenchmarkTests(unittest.TestCase):
         fenced = parse_json_object('```json\n{"verdict":"FAIL"}\n```')
         self.assertEqual(plain["verdict"], "PASS")
         self.assertEqual(fenced["verdict"], "FAIL")
+
+    def test_parse_copilot_jsonl_extracts_message_and_usage(self) -> None:
+        stream = "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "assistant.message_delta",
+                        "data": {"deltaContent": "hel"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant.message",
+                        "data": {"content": "hello"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant.usage",
+                        "data": {
+                            "inputTokens": 123,
+                            "outputTokens": 17,
+                            "cacheReadTokens": 9,
+                        },
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant.reasoning_delta",
+                        "data": {"deltaContent": "private"},
+                    }
+                ),
+            ]
+        )
+        parsed = parse_copilot_jsonl(stream)
+        self.assertEqual(parsed["content"], "hello")
+        self.assertEqual(parsed["input_tokens"], 123)
+        self.assertEqual(parsed["output_tokens"], 17)
+        self.assertEqual(parsed["cache_read_tokens"], 9)
+        self.assertEqual(parsed["tool_event_count"], 0)
+        self.assertFalse(
+            any(event.get("type", "").startswith("assistant.reasoning") for event in parsed["events"])
+        )
+
+    def test_parse_copilot_jsonl_counts_tool_events(self) -> None:
+        stream = "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "assistant.message",
+                        "data": {"content": "answer"},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant.usage",
+                        "data": {"inputTokens": 10, "outputTokens": 2},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "tool.execution_start",
+                        "data": {"toolName": "bash"},
+                    }
+                ),
+            ]
+        )
+        parsed = parse_copilot_jsonl(stream)
+        self.assertEqual(parsed["tool_event_count"], 1)
 
     def test_summary_uses_paired_repetitions(self) -> None:
         rows = []
@@ -69,7 +142,10 @@ class LiveBenchmarkTests(unittest.TestCase):
                 )
         summary = summarize_results(rows, seed=17)
         self.assertEqual(summary["development_verdict"], "NO_DEVELOPMENT_WIN")
-        self.assertEqual(summary["paired_comparisons"]["C_minus_B"]["bootstrap_95_ci"], [0.0, 0.0])
+        self.assertEqual(
+            summary["paired_comparisons"]["C_minus_B"]["bootstrap_95_ci"],
+            [0.0, 0.0],
+        )
 
 
 if __name__ == "__main__":
