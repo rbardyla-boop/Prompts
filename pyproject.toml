@@ -15,6 +15,7 @@ test = ["jsonschema>=4.23,<5"]
 [project.scripts]
 promptctl = "promptctl.__main__:main"
 promptbench = "promptctl.benchmark:main"
+promptbench-live = "promptctl.live_benchmark:main"
 
 [tool.setuptools]
 packages = ["promptctl"]
