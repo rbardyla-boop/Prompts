@@ -171,6 +171,9 @@ def call_copilot(
     retries: int,
     call_id: str,
 ) -> dict[str, Any]:
+    if max_ai_credits < 30:
+        raise LiveBenchmarkError("Copilot CLI requires --max-ai-credits of at least 30")
+
     excluded_tools = ",".join(
         [
             "bash",
@@ -207,8 +210,6 @@ def call_copilot(
         model,
         "--context",
         "default",
-        "--reasoning-effort",
-        "low",
         "--max-ai-credits",
         str(max_ai_credits),
         "--output-format",
@@ -556,7 +557,7 @@ def run_fixture(
         "evaluator_model": evaluator_model,
         "repetitions_per_arm": repetitions,
         "context_tier": "default",
-        "reasoning_effort": "low",
+        "reasoning_effort": "provider default; no override",
         "tool_access": "excluded; zero tool events required",
         "output_token_ceiling": "provider default, identical model and CLI settings across arms",
         "generation_max_ai_credits_per_call": generation_max_ai_credits,
@@ -578,13 +579,13 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--fixture", default="research-contradiction-001")
     result.add_argument("--output", type=Path, required=True)
     result.add_argument("--copilot-binary", default="copilot")
-    result.add_argument("--generator-model", default="gpt-5.4")
-    result.add_argument("--evaluator-model", default="claude-haiku-4.5")
+    result.add_argument("--generator-model", default="auto")
+    result.add_argument("--evaluator-model", default="auto")
     result.add_argument("--repetitions", type=int, default=5)
     result.add_argument("--randomization-seed", type=int, required=True)
     result.add_argument("--max-context-chars", type=int, default=200_000)
-    result.add_argument("--generation-max-ai-credits", type=int, default=10)
-    result.add_argument("--evaluator-max-ai-credits", type=int, default=5)
+    result.add_argument("--generation-max-ai-credits", type=int, default=30)
+    result.add_argument("--evaluator-max-ai-credits", type=int, default=30)
     result.add_argument("--timeout-seconds", type=int, default=180)
     result.add_argument("--retries", type=int, default=1)
     return result
